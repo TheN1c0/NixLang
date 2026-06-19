@@ -1,0 +1,51 @@
+Rendimiento
+Respuesta general < 3 segundos.
+Búsquedas y filtros < 2 segundos.
+Apertura de lecciones < 2 segundos.
+Login percibido como inmediato.
+Disponibilidad
+Servicio 24/7.
+Hasta 8 horas de indisponibilidad mensual.
+Monitoreo activo.
+Alertas por correo electrónico.
+Seguridad
+Roles: Usuario y Administrador.
+Recuperación por correo electrónico.
+Verificación obligatoria de correo.
+Contraseñas almacenadas mediante hash seguro.
+Comunicación mediante HTTPS.
+Compatibilidad
+Responsive para móvil y escritorio.
+Navegadores modernos.
+Sin soporte para navegadores obsoletos.
+Infraestructura
+Angular.
+ASP.NET Core Web API.
+PostgreSQL.
+Docker.
+Azure como destino principal futuro.
+Calidad
+Clean Architecture.
+SOLID.
+CI/CD.
+Pruebas unitarias.
+Pruebas de integración.
+Análisis estático.
+Revisiones de código.
+Observabilidad
+Logs de información, advertencias y errores.
+Monitoreo de:
+Disponibilidad.
+Tiempo de respuesta.
+CPU.
+Memoria.
+Errores.
+Alertas por correo.
+Respaldo
+Backup cada 12 horas.
+Retención de 7 días.
+Privacidad
+Eliminación completa de cuenta bajo solicitud.
+Registro de última conexión.
+Conservación indefinida de datos mientras la cuenta exista.
+Posible limpieza futura de cuentas inactivas.
