@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NixLang.Api/NixLang.Api.csproj" />
+    <Project Path="src/NixLang.Application/NixLang.Application.csproj" />
+    <Project Path="src/NixLang.Domain/NixLang.Domain.csproj" />
+    <Project Path="src/NixLang.Infrastructure/NixLang.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NixLang.IntegrationTests/NixLang.IntegrationTests.csproj" />
+    <Project Path="tests/NixLang.UnitTests/NixLang.UnitTests.csproj" />
+  </Folder>
+</Solution>
