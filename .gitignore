@@ -1,0 +1,87 @@
+# ============================================
+# .NET
+# ============================================
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.assets.json
+project.lock.json
+
+# MSBuild
+*.log
+msbuild.binlog
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ============================================
+# Visual Studio / VS Code / Rider
+# ============================================
+.vs/
+.vscode/
+*.csproj.user
+*.dbmdl
+*.jfm
+launchSettings.json
+!**/Properties/launchSettings.json
+
+# Rider
+.idea/
+*.sln.iml
+
+# ============================================
+# ASP.NET
+# ============================================
+ScaffoldingReadMe.txt
+appsettings.*.local.json
+
+# ============================================
+# Docker
+# ============================================
+docker-compose.override.yml
+
+# ============================================
+# OS Files
+# ============================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+~$*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# ============================================
+# Testing
+# ============================================
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
