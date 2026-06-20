@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using NixLang.Application.Common.Interfaces;
 using NixLang.Domain.Entities;
 
 namespace NixLang.Infrastructure.Persistence;
 
-public class NixLangDbContext : DbContext
+public class NixLangDbContext : DbContext, IUnitOfWork
 {
     public NixLangDbContext(DbContextOptions<NixLangDbContext> options) : base(options)
     {
