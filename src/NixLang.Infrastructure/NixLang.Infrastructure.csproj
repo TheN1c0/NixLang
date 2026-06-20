@@ -2,6 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NixLang.Application\NixLang.Application.csproj" />
+    <ProjectReference Include="..\NixLang.Domain\NixLang.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
   </ItemGroup>
 
   <PropertyGroup>

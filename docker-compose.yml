@@ -13,37 +13,35 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-    # depends_on:
-    #   nixlang-db:
-    #     condition: service_healthy
+      - ConnectionStrings__DefaultConnection=Host=nixlang-db;Port=5432;Database=nixlang;Username=nixlang_user;Password=nixlang_password
+    depends_on:
+      nixlang-db:
+        condition: service_healthy
     networks:
       - nixlang-network
 
-  # -----------------------------------------------
-  # PostgreSQL - Descomentar cuando sea necesario
-  # -----------------------------------------------
-  # nixlang-db:
-  #   image: postgres:17-alpine
-  #   container_name: nixlang-db
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_DB: nixlang
-  #     POSTGRES_USER: nixlang_user
-  #     POSTGRES_PASSWORD: nixlang_password
-  #   volumes:
-  #     - nixlang-db-data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U nixlang_user -d nixlang"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   networks:
-  #     - nixlang-network
+  nixlang-db:
+    image: postgres:16
+    container_name: nixlang-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: nixlang
+      POSTGRES_USER: nixlang_user
+      POSTGRES_PASSWORD: nixlang_password
+    volumes:
+      - nixlang-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nixlang_user -d nixlang"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nixlang-network
 
 networks:
   nixlang-network:
     driver: bridge
 
-# volumes:
-#   nixlang-db-data:
+volumes:
+  nixlang-db-data:
