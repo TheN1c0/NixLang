@@ -43,4 +43,9 @@ public class User : BaseEntity
         Role = UserRole.User;
         CreatedAt = DateTime.UtcNow;
     }
+
+    public void UpdateRole(UserRole role)
+    {
+        Role = role;
+    }
 }

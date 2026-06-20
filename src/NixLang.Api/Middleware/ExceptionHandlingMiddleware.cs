@@ -42,6 +42,10 @@ public class ExceptionHandlingMiddleware
                 StatusCodes.Status409Conflict,
                 CreateErrorResponse("Conflict", emailEx.Message)),
 
+            InvalidCredentialsException credEx => (
+                StatusCodes.Status401Unauthorized,
+                CreateErrorResponse("Unauthorized", credEx.Message)),
+
             ArgumentException argEx => (
                 StatusCodes.Status400BadRequest,
                 CreateErrorResponse("Bad Request", argEx.Message)),
@@ -87,6 +91,7 @@ public class ExceptionHandlingMiddleware
         {
             "Conflict" => StatusCodes.Status409Conflict,
             "Bad Request" => StatusCodes.Status400BadRequest,
+            "Unauthorized" => StatusCodes.Status401Unauthorized,
             _ => StatusCodes.Status500InternalServerError
         };
     }

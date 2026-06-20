@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NixLang.Application.Common.Interfaces;
+using NixLang.Application.Common.Models;
 using NixLang.Domain.Repositories;
 using NixLang.Infrastructure.Persistence;
 using NixLang.Infrastructure.Persistence.Repositories;
@@ -37,6 +38,10 @@ public static class DependencyInjection
 
         // Register Security services
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+
+        // Register JWT settings and services
+        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }

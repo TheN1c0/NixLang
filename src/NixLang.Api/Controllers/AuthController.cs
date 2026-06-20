@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using NixLang.Application.Users.Commands.Login;
 using NixLang.Application.Users.Commands.RegisterUser;
 
 namespace NixLang.Api.Controllers;
@@ -23,5 +24,15 @@ public class AuthController : ControllerBase
     {
         var userId = await _mediator.Send(command);
         return CreatedAtAction(null, null, new { UserId = userId });
+    }
+
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login([FromBody] LoginCommand command)
+    {
+        var response = await _mediator.Send(command);
+        return Ok(response);
     }
 }
