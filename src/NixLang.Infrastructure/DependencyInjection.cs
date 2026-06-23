@@ -32,12 +32,14 @@ public static class DependencyInjection
 
         // Register repositories
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ILessonRepository, LessonRepository>();
 
         // Register Unit of Work mapped to DbContext
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<NixLangDbContext>());
 
         // Register Security services
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         // Register JWT settings and services
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));

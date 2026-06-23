@@ -43,4 +43,22 @@ public class Lesson : BaseEntity
         Status = PublicationStatus.Draft;
         CreatedAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Transitions the lesson to Published status, making it visible in the catalog.
+    /// </summary>
+    public void Publish()
+    {
+        Status = PublicationStatus.Published;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Transitions the lesson to Disabled status, removing it from the catalog.
+    /// </summary>
+    public void Disable()
+    {
+        Status = PublicationStatus.Disabled;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }
