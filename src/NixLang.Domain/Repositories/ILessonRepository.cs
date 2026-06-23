@@ -13,4 +13,9 @@ public interface ILessonRepository
     /// Returns the total count of published lessons.
     /// </summary>
     Task<int> CountPublishedAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a published lesson by its identifier, including its exercises.
+    /// </summary>
+    Task<Lesson?> GetPublishedByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }

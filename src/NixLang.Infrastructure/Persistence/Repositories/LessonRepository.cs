@@ -30,4 +30,11 @@ public class LessonRepository : ILessonRepository
         return await _dbContext.Lessons
             .CountAsync(l => l.Status == PublicationStatus.Published, cancellationToken);
     }
+
+    public async Task<Lesson?> GetPublishedByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Lessons
+            .Include(l => l.Exercises)
+            .FirstOrDefaultAsync(l => l.Id == id && l.Status == PublicationStatus.Published, cancellationToken);
+    }
 }

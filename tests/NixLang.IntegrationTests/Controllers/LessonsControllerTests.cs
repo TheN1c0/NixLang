@@ -212,6 +212,146 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
         Assert.True(result.TotalCount >= 5);
     }
 
+    [Fact]
+    public async Task GetLessonById_WithoutToken_ShouldReturn401()
+    {
+        // Arrange
+        var someId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.GetAsync($"/api/lessons/{someId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetLessonById_WithExistingPublishedLesson_ShouldReturn200AndDetail()
+    {
+        // Arrange
+        Guid lessonId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var lesson = new Lesson("Present Perfect", "Learn the present perfect tense", ReferenceLevel.B1);
+            lesson.Publish();
+            dbContext.Lessons.Add(lesson);
+
+            var ex1 = new Exercise(lesson.Id, ExerciseType.MultipleChoice, "Exercise 1", 1);
+            var ex2 = new Exercise(lesson.Id, ExerciseType.Translation, "Exercise 2", 2);
+            dbContext.Exercises.AddRange(ex1, ex2);
+
+            dbContext.SaveChanges();
+            lessonId = lesson.Id;
+        }
+
+        var token = await RegisterAndLogin();
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons/{lessonId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<LessonDetailResponseDto>();
+        Assert.NotNull(result);
+        Assert.Equal(lessonId, result.Id);
+        Assert.Equal("Present Perfect", result.Title);
+        Assert.Equal("Learn the present perfect tense", result.Description);
+        Assert.Equal("B1", result.ReferenceLevel);
+        Assert.Equal(2, result.ExerciseCount);
+    }
+
+    [Fact]
+    public async Task GetLessonById_WithDraftLesson_ShouldReturn404()
+    {
+        // Arrange
+        Guid draftLessonId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var lesson = new Lesson("Draft Lesson Title", "Draft Lesson Desc", ReferenceLevel.A2);
+            dbContext.Lessons.Add(lesson);
+            dbContext.SaveChanges();
+            draftLessonId = lesson.Id;
+        }
+
+        var token = await RegisterAndLogin();
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons/{draftLessonId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetLessonById_WithDisabledLesson_ShouldReturn404()
+    {
+        // Arrange
+        Guid disabledLessonId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var lesson = new Lesson("Disabled Lesson Title", "Disabled Lesson Desc", ReferenceLevel.B2);
+            lesson.Publish();
+            lesson.Disable();
+            dbContext.Lessons.Add(lesson);
+            dbContext.SaveChanges();
+            disabledLessonId = lesson.Id;
+        }
+
+        var token = await RegisterAndLogin();
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons/{disabledLessonId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetLessonById_WithNonExistingId_ShouldReturn404()
+    {
+        // Arrange
+        var nonExistingId = Guid.NewGuid();
+        var token = await RegisterAndLogin();
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons/{nonExistingId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetLessonById_WithInvalidGuid_ShouldReturn400()
+    {
+        // Arrange
+        var token = await RegisterAndLogin();
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/lessons/invalid-guid-format");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     // --- Helpers ---
 
     private void SeedLessons(
@@ -303,5 +443,14 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
         public string Title { get; set; } = string.Empty;
         public int Status { get; set; }
         public Dictionary<string, string[]> Errors { get; set; } = [];
+    }
+
+    private class LessonDetailResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string ReferenceLevel { get; set; } = string.Empty;
+        public int ExerciseCount { get; set; }
     }
 }

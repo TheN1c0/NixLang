@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NixLang.Application.Common.Models;
 using NixLang.Application.Lessons.Queries.GetLessons;
+using NixLang.Application.Lessons.Queries.GetLessonById;
 
 namespace NixLang.Api.Controllers;
 
@@ -25,6 +26,16 @@ public class LessonsController : ControllerBase
     public async Task<IActionResult> GetLessons([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var response = await _mediator.Send(new GetLessonsQuery(page, pageSize));
+        return Ok(response);
+    }
+
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(LessonDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetLessonById(Guid id)
+    {
+        var response = await _mediator.Send(new GetLessonByIdQuery(id));
         return Ok(response);
     }
 }

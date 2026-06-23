@@ -50,6 +50,10 @@ public class ExceptionHandlingMiddleware
                 StatusCodes.Status404NotFound,
                 CreateErrorResponse("Not Found", userNotFoundEx.Message)),
 
+            LessonNotFoundException lessonNotFoundEx => (
+                StatusCodes.Status404NotFound,
+                CreateErrorResponse("Not Found", lessonNotFoundEx.Message)),
+
             ArgumentException argEx => (
                 StatusCodes.Status400BadRequest,
                 CreateErrorResponse("Bad Request", argEx.Message)),
