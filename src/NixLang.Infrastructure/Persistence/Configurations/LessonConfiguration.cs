@@ -40,5 +40,20 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
 
         builder.Navigation(l => l.Exercises)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(l => l.Categories)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "LessonCategory",
+                j => j.HasOne<Category>().WithMany().HasForeignKey("CategoryId").HasConstraintName("fk_lesson_categories_categories_category_id"),
+                j => j.HasOne<Lesson>().WithMany().HasForeignKey("LessonId").HasConstraintName("fk_lesson_categories_lessons_lesson_id"),
+                j =>
+                {
+                    j.ToTable("lesson_categories");
+                    j.HasKey("LessonId", "CategoryId");
+                });
+
+        builder.Navigation(l => l.Categories)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

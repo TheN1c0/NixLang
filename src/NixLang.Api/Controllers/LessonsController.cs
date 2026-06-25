@@ -23,9 +23,23 @@ public class LessonsController : ControllerBase
     [ProducesResponseType(typeof(PagedResult<LessonSummaryDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetLessons([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetLessons(
+        [FromQuery] int page = 1, 
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] string? level = null,
+        [FromQuery] string? categoryIds = null)
     {
-        var response = await _mediator.Send(new GetLessonsQuery(page, pageSize));
+        List<Guid>? parsedCategoryIds = null;
+        if (!string.IsNullOrWhiteSpace(categoryIds))
+        {
+            parsedCategoryIds = categoryIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Guid.Parse)
+                .ToList();
+        }
+
+        var response = await _mediator.Send(new GetLessonsQuery(page, pageSize, search, level, parsedCategoryIds));
         return Ok(response);
     }
 

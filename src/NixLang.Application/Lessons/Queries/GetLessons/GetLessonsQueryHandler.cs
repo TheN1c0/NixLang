@@ -16,10 +16,10 @@ public class GetLessonsQueryHandler : IRequestHandler<GetLessonsQuery, PagedResu
     public async Task<PagedResult<LessonSummaryDto>> Handle(GetLessonsQuery request, CancellationToken cancellationToken)
     {
         // 1. Get total count of published lessons
-        var totalCount = await _lessonRepository.CountPublishedAsync(cancellationToken);
+        var totalCount = await _lessonRepository.CountPublishedAsync(request.Search, request.Level, request.CategoryIds, cancellationToken);
 
         // 2. Get paginated published lessons
-        var lessons = await _lessonRepository.GetPublishedAsync(request.Page, request.PageSize, cancellationToken);
+        var lessons = await _lessonRepository.GetPublishedAsync(request.Page, request.PageSize, request.Search, request.Level, request.CategoryIds, cancellationToken);
 
         // 3. Map domain entities to DTOs
         var items = lessons

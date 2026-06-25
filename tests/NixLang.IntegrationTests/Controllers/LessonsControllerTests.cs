@@ -352,6 +352,387 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task GetLessons_WithSearchTermInTitle_ShouldReturnMatchingLessons()
+    {
+        // Arrange
+        var token = await RegisterAndLogin();
+        SeedLessons(
+            published:
+            [
+                ("Present Simple", "Introduction to present simple", ReferenceLevel.A1),
+                ("Past Simple", "Introduction to past simple", ReferenceLevel.A2),
+                ("Business English", "English for business", ReferenceLevel.B1)
+            ]);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/lessons?search=Simple");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Title == "Present Simple");
+        Assert.Contains(result.Items, item => item.Title == "Past Simple");
+        Assert.DoesNotContain(result.Items, item => item.Title == "Business English");
+    }
+
+    [Fact]
+    public async Task GetLessons_WithSearchTermInDescription_ShouldReturnMatchingLessons()
+    {
+        // Arrange
+        var token = await RegisterAndLogin();
+        SeedLessons(
+            published:
+            [
+                ("Present Simple", "Introduction to present simple", ReferenceLevel.A1),
+                ("Past Simple", "Introduction to past simple", ReferenceLevel.A2),
+                ("Travel Vocabulary", "Vocabulary used during travel activities", ReferenceLevel.B1)
+            ]);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/lessons?search=travel");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Title == "Travel Vocabulary");
+    }
+
+    [Fact]
+    public async Task GetLessons_WithCaseInsensitiveSearch_ShouldFindMatches()
+    {
+        // Arrange
+        var token = await RegisterAndLogin();
+        SeedLessons(
+            published:
+            [
+                ("Present Simple", "Introduction to present simple", ReferenceLevel.A1)
+            ]);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/lessons?search=pReSeNt");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Title == "Present Simple");
+    }
+
+    [Fact]
+    public async Task GetLessons_WithNoMatches_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var token = await RegisterAndLogin();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/lessons?search=NonExistingTerm12345");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Empty(result.Items);
+    }
+
+    [Fact]
+    public async Task GetLessons_WithSearchTermTooLong_ShouldReturn400()
+    {
+        // Arrange
+        var token = await RegisterAndLogin();
+        var longSearchTerm = new string('a', 101);
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons?search={longSearchTerm}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<ValidationErrorDto>();
+        Assert.NotNull(error);
+        Assert.True(error.Errors.ContainsKey("Search"));
+    }
+    [Fact]
+    public async Task GetLessons_WithLevelFilter_ShouldReturnOnlyLessonsOfThatLevel()
+    {
+        // Arrange
+        Guid levelA1LessonId;
+        Guid levelB2LessonId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var l1 = new Lesson("A1 Lesson", "Description A1", ReferenceLevel.A1);
+            l1.Publish();
+            var l2 = new Lesson("B2 Lesson", "Description B2", ReferenceLevel.B2);
+            l2.Publish();
+            dbContext.Lessons.AddRange(l1, l2);
+            dbContext.SaveChanges();
+            levelA1LessonId = l1.Id;
+            levelB2LessonId = l2.Id;
+        }
+
+        var token = await RegisterAndLogin();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/lessons?level=A1");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Id == levelA1LessonId);
+        Assert.DoesNotContain(result.Items, item => item.Id == levelB2LessonId);
+    }
+
+    [Fact]
+    public async Task GetLessons_WithCategoryFilter_ShouldReturnLessonsOfThatCategory()
+    {
+        // Arrange
+        Guid cat1Id;
+        Guid lessonWithCatId;
+        Guid lessonWithoutCatId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var c1 = new Category($"Grammar {Guid.NewGuid()}", "Grammar category");
+            dbContext.Categories.Add(c1);
+            dbContext.SaveChanges();
+            cat1Id = c1.Id;
+
+            var l1 = new Lesson("Grammar Lesson", "Learn grammar", ReferenceLevel.B1);
+            l1.Publish();
+            l1.AddCategory(c1);
+
+            var l2 = new Lesson("Vocabulary Lesson", "Learn vocab", ReferenceLevel.B1);
+            l2.Publish();
+
+            dbContext.Lessons.AddRange(l1, l2);
+            dbContext.SaveChanges();
+
+            lessonWithCatId = l1.Id;
+            lessonWithoutCatId = l2.Id;
+        }
+
+        var token = await RegisterAndLogin();
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons?categoryIds={cat1Id}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Id == lessonWithCatId);
+        Assert.DoesNotContain(result.Items, item => item.Id == lessonWithoutCatId);
+    }
+
+    [Fact]
+    public async Task GetLessons_WithMultipleCategoriesFilter_ShouldReturnLessonsOfAnyCategory()
+    {
+        // Arrange
+        Guid cat1Id;
+        Guid cat2Id;
+        Guid lessonCat1Id;
+        Guid lessonCat2Id;
+        Guid lessonNoCatId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var c1 = new Category($"Cat 1 {Guid.NewGuid()}", "Desc 1");
+            var c2 = new Category($"Cat 2 {Guid.NewGuid()}", "Desc 2");
+            dbContext.Categories.AddRange(c1, c2);
+            dbContext.SaveChanges();
+            cat1Id = c1.Id;
+            cat2Id = c2.Id;
+
+            var l1 = new Lesson("Lesson Cat1", "Learn Cat1", ReferenceLevel.B1);
+            l1.Publish();
+            l1.AddCategory(c1);
+
+            var l2 = new Lesson("Lesson Cat2", "Learn Cat2", ReferenceLevel.B1);
+            l2.Publish();
+            l2.AddCategory(c2);
+
+            var l3 = new Lesson("Lesson NoCat", "Learn NoCat", ReferenceLevel.B1);
+            l3.Publish();
+
+            dbContext.Lessons.AddRange(l1, l2, l3);
+            dbContext.SaveChanges();
+
+            lessonCat1Id = l1.Id;
+            lessonCat2Id = l2.Id;
+            lessonNoCatId = l3.Id;
+        }
+
+        var token = await RegisterAndLogin();
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons?categoryIds={cat1Id},{cat2Id}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Id == lessonCat1Id);
+        Assert.Contains(result.Items, item => item.Id == lessonCat2Id);
+        Assert.DoesNotContain(result.Items, item => item.Id == lessonNoCatId);
+    }
+
+    [Fact]
+    public async Task GetLessons_WithLevelAndCategoryFilter_ShouldReturnLessonsMatchingBoth()
+    {
+        // Arrange
+        Guid catId;
+        Guid matchingLessonId;
+        Guid wrongLevelLessonId;
+        Guid wrongCatLessonId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var c1 = new Category($"Cat A1 {Guid.NewGuid()}", "Desc");
+            dbContext.Categories.Add(c1);
+            dbContext.SaveChanges();
+            catId = c1.Id;
+
+            var l1 = new Lesson("Matching B1", "Matching B1", ReferenceLevel.B1);
+            l1.Publish();
+            l1.AddCategory(c1);
+
+            var l2 = new Lesson("Wrong Level A2", "Wrong Level A2", ReferenceLevel.A2);
+            l2.Publish();
+            l2.AddCategory(c1);
+
+            var l3 = new Lesson("Wrong Cat B1", "Wrong Cat B1", ReferenceLevel.B1);
+            l3.Publish();
+
+            dbContext.Lessons.AddRange(l1, l2, l3);
+            dbContext.SaveChanges();
+
+            matchingLessonId = l1.Id;
+            wrongLevelLessonId = l2.Id;
+            wrongCatLessonId = l3.Id;
+        }
+
+        var token = await RegisterAndLogin();
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons?level=B1&categoryIds={catId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Id == matchingLessonId);
+        Assert.DoesNotContain(result.Items, item => item.Id == wrongLevelLessonId);
+        Assert.DoesNotContain(result.Items, item => item.Id == wrongCatLessonId);
+    }
+
+    [Fact]
+    public async Task GetLessons_WithLevelCategoryAndSearchFilter_ShouldReturnMatchingAll()
+    {
+        // Arrange
+        Guid catId;
+        Guid matchingLessonId;
+        Guid wrongSearchLessonId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var c1 = new Category($"Cat A1 {Guid.NewGuid()}", "Desc");
+            dbContext.Categories.Add(c1);
+            dbContext.SaveChanges();
+            catId = c1.Id;
+
+            var l1 = new Lesson("Travel Tips", "Tips for travel", ReferenceLevel.B2);
+            l1.Publish();
+            l1.AddCategory(c1);
+
+            var l2 = new Lesson("Business Tips", "Tips for business", ReferenceLevel.B2);
+            l2.Publish();
+            l2.AddCategory(c1);
+
+            dbContext.Lessons.AddRange(l1, l2);
+            dbContext.SaveChanges();
+
+            matchingLessonId = l1.Id;
+            wrongSearchLessonId = l2.Id;
+        }
+
+        var token = await RegisterAndLogin();
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/lessons?search=travel&level=B2&categoryIds={catId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Id == matchingLessonId);
+        Assert.DoesNotContain(result.Items, item => item.Id == wrongSearchLessonId);
+    }
+
+    [Fact]
+    public async Task GetLessons_WithFiltersAndNoResults_ShouldReturn200AndEmptyList()
+    {
+        // Arrange
+        var token = await RegisterAndLogin();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/lessons?level=B2&categoryIds=00000000-0000-0000-0000-000000000000");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto>();
+        Assert.NotNull(result);
+        Assert.Empty(result.Items);
+    }
+
+    [Fact]
+    public async Task GetLessons_WithInvalidLevelFilter_ShouldReturn400BadRequest()
+    {
+        // Arrange
+        var token = await RegisterAndLogin();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/lessons?level=XYZ");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<ValidationErrorDto>();
+        Assert.NotNull(error);
+        Assert.True(error.Errors.ContainsKey("Level"));
+    }
     // --- Helpers ---
 
     private void SeedLessons(

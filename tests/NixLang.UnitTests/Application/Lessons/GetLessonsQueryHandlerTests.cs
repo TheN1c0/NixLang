@@ -24,8 +24,8 @@ public class GetLessonsQueryHandlerTests
         // Arrange
         var lessons = CreatePublishedLessons(3);
 
-        _lessonRepository.CountPublishedAsync(Arg.Any<CancellationToken>()).Returns(3);
-        _lessonRepository.GetPublishedAsync(1, 10, Arg.Any<CancellationToken>()).Returns(lessons);
+        _lessonRepository.CountPublishedAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(3);
+        _lessonRepository.GetPublishedAsync(1, 10, Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(lessons);
 
         // Act
         var result = await _handler.Handle(new GetLessonsQuery(1, 10), CancellationToken.None);
@@ -43,8 +43,8 @@ public class GetLessonsQueryHandlerTests
     public async Task Handle_WithNoLessons_ShouldReturnEmptyPagedResult()
     {
         // Arrange
-        _lessonRepository.CountPublishedAsync(Arg.Any<CancellationToken>()).Returns(0);
-        _lessonRepository.GetPublishedAsync(1, 10, Arg.Any<CancellationToken>())
+        _lessonRepository.CountPublishedAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(0);
+        _lessonRepository.GetPublishedAsync(1, 10, Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<Lesson>().AsReadOnly());
 
         // Act
@@ -61,16 +61,16 @@ public class GetLessonsQueryHandlerTests
     public async Task Handle_ShouldCallRepositoryWithCorrectPaginationParams()
     {
         // Arrange
-        _lessonRepository.CountPublishedAsync(Arg.Any<CancellationToken>()).Returns(0);
-        _lessonRepository.GetPublishedAsync(3, 20, Arg.Any<CancellationToken>())
+        _lessonRepository.CountPublishedAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(0);
+        _lessonRepository.GetPublishedAsync(3, 20, Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<Lesson>().AsReadOnly());
 
         // Act
         await _handler.Handle(new GetLessonsQuery(3, 20), CancellationToken.None);
 
         // Assert
-        await _lessonRepository.Received(1).GetPublishedAsync(3, 20, Arg.Any<CancellationToken>());
-        await _lessonRepository.Received(1).CountPublishedAsync(Arg.Any<CancellationToken>());
+        await _lessonRepository.Received(1).GetPublishedAsync(3, 20, Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>());
+        await _lessonRepository.Received(1).CountPublishedAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -81,8 +81,8 @@ public class GetLessonsQueryHandlerTests
         lesson.Publish();
         var lessons = new List<Lesson> { lesson }.AsReadOnly();
 
-        _lessonRepository.CountPublishedAsync(Arg.Any<CancellationToken>()).Returns(1);
-        _lessonRepository.GetPublishedAsync(1, 10, Arg.Any<CancellationToken>()).Returns(lessons);
+        _lessonRepository.CountPublishedAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(1);
+        _lessonRepository.GetPublishedAsync(1, 10, Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(lessons);
 
         // Act
         var result = await _handler.Handle(new GetLessonsQuery(1, 10), CancellationToken.None);
@@ -112,6 +112,81 @@ public class GetLessonsQueryHandlerTests
 
         // Assert
         Assert.Equal(expectedTotalPages, result.TotalPages);
+    }
+    [Fact]
+    public async Task Handle_WithSearchTerm_ShouldPassSearchTermToRepository()
+    {
+        // Arrange
+        var search = "Present";
+        var lessons = CreatePublishedLessons(1);
+
+        _lessonRepository.CountPublishedAsync(search, Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(1);
+        _lessonRepository.GetPublishedAsync(1, 10, search, Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(lessons);
+
+        // Act
+        var result = await _handler.Handle(new GetLessonsQuery(1, 10, search), CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        await _lessonRepository.Received(1).GetPublishedAsync(1, 10, search, Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>());
+        await _lessonRepository.Received(1).CountPublishedAsync(search, Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WithEmptySearchTerm_ShouldPassNullOrEmptyToRepository()
+    {
+        // Arrange
+        var search = "";
+        var lessons = CreatePublishedLessons(1);
+
+        _lessonRepository.CountPublishedAsync(search, Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(1);
+        _lessonRepository.GetPublishedAsync(1, 10, search, Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(lessons);
+
+        // Act
+        var result = await _handler.Handle(new GetLessonsQuery(1, 10, search), CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        await _lessonRepository.Received(1).GetPublishedAsync(1, 10, search, Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>());
+        await _lessonRepository.Received(1).CountPublishedAsync(search, Arg.Any<string?>(), Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WithLevelFilter_ShouldPassLevelToRepository()
+    {
+        // Arrange
+        var level = "A2";
+        var lessons = CreatePublishedLessons(1);
+
+        _lessonRepository.CountPublishedAsync(Arg.Any<string?>(), level, Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(1);
+        _lessonRepository.GetPublishedAsync(1, 10, Arg.Any<string?>(), level, Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>()).Returns(lessons);
+
+        // Act
+        var result = await _handler.Handle(new GetLessonsQuery(1, 10, null, level, null), CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        await _lessonRepository.Received(1).GetPublishedAsync(1, 10, Arg.Any<string?>(), level, Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>());
+        await _lessonRepository.Received(1).CountPublishedAsync(Arg.Any<string?>(), level, Arg.Any<IEnumerable<Guid>?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WithCategoryIdsFilter_ShouldPassCategoryIdsToRepository()
+    {
+        // Arrange
+        var categoryIds = new List<Guid> { Guid.NewGuid() };
+        var lessons = CreatePublishedLessons(1);
+
+        _lessonRepository.CountPublishedAsync(Arg.Any<string?>(), Arg.Any<string?>(), categoryIds, Arg.Any<CancellationToken>()).Returns(1);
+        _lessonRepository.GetPublishedAsync(1, 10, Arg.Any<string?>(), Arg.Any<string?>(), categoryIds, Arg.Any<CancellationToken>()).Returns(lessons);
+
+        // Act
+        var result = await _handler.Handle(new GetLessonsQuery(1, 10, null, null, categoryIds), CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        await _lessonRepository.Received(1).GetPublishedAsync(1, 10, Arg.Any<string?>(), Arg.Any<string?>(), categoryIds, Arg.Any<CancellationToken>());
+        await _lessonRepository.Received(1).CountPublishedAsync(Arg.Any<string?>(), Arg.Any<string?>(), categoryIds, Arg.Any<CancellationToken>());
     }
 
     private static IReadOnlyList<Lesson> CreatePublishedLessons(int count)

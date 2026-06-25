@@ -12,6 +12,7 @@ namespace NixLang.Domain.Entities;
 public class Lesson : BaseEntity
 {
     private readonly List<Exercise> _exercises = [];
+    private readonly List<Category> _categories = [];
 
     public string Title { get; private set; }
     public string Description { get; private set; }
@@ -21,6 +22,16 @@ public class Lesson : BaseEntity
     public DateTime? UpdatedAt { get; private set; }
 
     public IReadOnlyCollection<Exercise> Exercises => _exercises.AsReadOnly();
+    public IReadOnlyCollection<Category> Categories => _categories.AsReadOnly();
+
+    public void AddCategory(Category category)
+    {
+        if (category == null) throw new ArgumentNullException(nameof(category));
+        if (!_categories.Any(c => c.Id == category.Id))
+        {
+            _categories.Add(category);
+        }
+    }
 
     protected Lesson() : base()
     {
