@@ -75,7 +75,9 @@ public class LessonRepository : ILessonRepository
     public async Task<Lesson?> GetPublishedByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _dbContext.Lessons
-            .Include(l => l.Exercises)
+            .Include(l => l.LessonBlocks)
+                .ThenInclude(b => b.Exercise)
+            .Include(l => l.Categories)
             .FirstOrDefaultAsync(l => l.Id == id && l.Status == PublicationStatus.Published, cancellationToken);
     }
 }

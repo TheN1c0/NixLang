@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NixLang.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NixLang.Infrastructure.Migrations
 {
     [DbContext(typeof(NixLangDbContext))]
-    partial class NixLangDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625055802_AddLessonBlocks")]
+    partial class AddLessonBlocks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -291,12 +294,11 @@ namespace NixLang.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_lesson_blocks");
 
+                    b.HasIndex("LessonId")
+                        .HasDatabaseName("ix_lesson_blocks_lesson_id");
+
                     b.HasIndex("ReferencedExerciseId")
                         .HasDatabaseName("ix_lesson_blocks_referenced_exercise_id");
-
-                    b.HasIndex("LessonId", "Sequence")
-                        .IsUnique()
-                        .HasDatabaseName("ix_lesson_blocks_lesson_id_sequence");
 
                     b.ToTable("lesson_blocks", (string)null);
                 });

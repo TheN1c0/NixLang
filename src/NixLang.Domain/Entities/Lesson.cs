@@ -11,7 +11,7 @@ namespace NixLang.Domain.Entities;
 /// </summary>
 public class Lesson : BaseEntity
 {
-    private readonly List<Exercise> _exercises = [];
+    private readonly List<LessonBlock> _lessonBlocks = [];
     private readonly List<Category> _categories = [];
 
     public string Title { get; private set; }
@@ -21,7 +21,7 @@ public class Lesson : BaseEntity
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
 
-    public IReadOnlyCollection<Exercise> Exercises => _exercises.AsReadOnly();
+    public IReadOnlyCollection<LessonBlock> LessonBlocks => _lessonBlocks.OrderBy(b => b.Sequence).ToList().AsReadOnly();
     public IReadOnlyCollection<Category> Categories => _categories.AsReadOnly();
 
     public void AddCategory(Category category)
@@ -30,6 +30,72 @@ public class Lesson : BaseEntity
         if (!_categories.Any(c => c.Id == category.Id))
         {
             _categories.Add(category);
+        }
+    }
+
+    public void AddLessonBlock(LessonBlock block)
+    {
+        if (block == null) throw new ArgumentNullException(nameof(block));
+        if (block.LessonId != Id) throw new ArgumentException("Block does not belong to this lesson.", nameof(block));
+
+        int nextSequence = _lessonBlocks.Count > 0 ? _lessonBlocks.Max(b => b.Sequence) + 1 : 1;
+        block.Sequence = nextSequence;
+        _lessonBlocks.Add(block);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void InsertLessonBlock(int index, LessonBlock block)
+    {
+        if (block == null) throw new ArgumentNullException(nameof(block));
+        if (block.LessonId != Id) throw new ArgumentException("Block does not belong to this lesson.", nameof(block));
+        if (index < 0 || index > _lessonBlocks.Count) throw new ArgumentOutOfRangeException(nameof(index));
+
+        _lessonBlocks.Insert(index, block);
+        ReorderSequences();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void RemoveLessonBlock(LessonBlock block)
+    {
+        if (block == null) throw new ArgumentNullException(nameof(block));
+
+        if (_lessonBlocks.Remove(block))
+        {
+            ReorderSequences();
+            UpdatedAt = DateTime.UtcNow;
+        }
+    }
+
+    public void MoveLessonBlock(Guid blockId, int newSequence)
+    {
+        var block = _lessonBlocks.FirstOrDefault(b => b.Id == blockId);
+        if (block == null) throw new ArgumentException("Block not found in this lesson.", nameof(blockId));
+        if (newSequence < 1 || newSequence > _lessonBlocks.Count) throw new ArgumentOutOfRangeException(nameof(newSequence));
+
+        _lessonBlocks.Remove(block);
+        _lessonBlocks.Insert(newSequence - 1, block);
+        ReorderSequences();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void ReplaceLessonBlock(Guid blockId, LessonBlock newBlock)
+    {
+        if (newBlock == null) throw new ArgumentNullException(nameof(newBlock));
+        if (newBlock.LessonId != Id) throw new ArgumentException("New block does not belong to this lesson.", nameof(newBlock));
+
+        var existingIndex = _lessonBlocks.FindIndex(b => b.Id == blockId);
+        if (existingIndex == -1) throw new ArgumentException("Existing block not found.", nameof(blockId));
+
+        newBlock.Sequence = _lessonBlocks[existingIndex].Sequence;
+        _lessonBlocks[existingIndex] = newBlock;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    private void ReorderSequences()
+    {
+        for (int i = 0; i < _lessonBlocks.Count; i++)
+        {
+            _lessonBlocks[i].Sequence = i + 1;
         }
     }
 

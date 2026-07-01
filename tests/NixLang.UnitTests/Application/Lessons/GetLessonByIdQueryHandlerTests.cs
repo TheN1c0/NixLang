@@ -32,9 +32,14 @@ public class GetLessonByIdQueryHandlerTests
         var lessonId = lesson.Id; // Already generated upon construction
         lesson.Publish();
 
-        // Add 2 mock exercises
-        AddExercise(lesson, new Exercise(lessonId, ExerciseType.MultipleChoice, "Question 1", 1));
-        AddExercise(lesson, new Exercise(lessonId, ExerciseType.Translation, "Question 2", 2));
+        // Add 2 mock exercises via blocks
+        var ex1 = new Exercise(ExerciseType.MultipleChoice, "Question 1");
+        var ex2 = new Exercise(ExerciseType.Translation, "Question 2");
+        var block1 = LessonBlock.CreateExerciseBlock(lessonId, 1, ex1.Id);
+        var block2 = LessonBlock.CreateExerciseBlock(lessonId, 2, ex2.Id);
+
+        AddLessonBlockWithExercise(lesson, block1, ex1);
+        AddLessonBlockWithExercise(lesson, block2, ex2);
 
         _lessonRepository.GetPublishedByIdAsync(lessonId, Arg.Any<CancellationToken>()).Returns(lesson);
 
@@ -48,6 +53,7 @@ public class GetLessonByIdQueryHandlerTests
         Assert.Equal("Learn the present simple tense", result.Description);
         Assert.Equal("A1", result.ReferenceLevel);
         Assert.Equal(2, result.ExerciseCount);
+        Assert.Equal(2, result.LessonBlocks.Count);
     }
 
     [Fact]
@@ -78,10 +84,9 @@ public class GetLessonByIdQueryHandlerTests
         await _lessonRepository.Received(1).GetPublishedByIdAsync(lessonId, Arg.Any<CancellationToken>());
     }
 
-    private static void AddExercise(Lesson lesson, Exercise exercise)
+    private static void AddLessonBlockWithExercise(Lesson lesson, LessonBlock block, Exercise exercise)
     {
-        var exercisesField = typeof(Lesson).GetField("_exercises", BindingFlags.NonPublic | BindingFlags.Instance);
-        var exercises = (List<Exercise>?)exercisesField?.GetValue(lesson);
-        exercises?.Add(exercise);
+        typeof(LessonBlock).GetProperty("Exercise")?.SetValue(block, exercise);
+        lesson.AddLessonBlock(block);
     }
 }

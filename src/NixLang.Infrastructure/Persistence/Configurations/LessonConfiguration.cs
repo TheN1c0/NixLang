@@ -33,12 +33,12 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
         builder.Property(l => l.CreatedAt)
             .IsRequired();
 
-        builder.HasMany(l => l.Exercises)
+        builder.HasMany(l => l.LessonBlocks)
             .WithOne()
-            .HasForeignKey(e => e.LessonId)
+            .HasForeignKey(b => b.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Navigation(l => l.Exercises)
+        builder.Navigation(l => l.LessonBlocks)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
         builder.HasMany(l => l.Categories)

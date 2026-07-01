@@ -12,9 +12,6 @@ public class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
 
         builder.HasKey(e => e.Id);
 
-        builder.Property(e => e.LessonId)
-            .IsRequired();
-
         builder.Property(e => e.Type)
             .IsRequired()
             .HasConversion<string>()
@@ -26,9 +23,6 @@ public class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
 
         builder.Property(e => e.CorrectAnswer)
             .HasMaxLength(1000);
-
-        builder.Property(e => e.DisplayOrder)
-            .IsRequired();
 
         builder.Property(e => e.AudioResourceUrl)
             .HasMaxLength(500);

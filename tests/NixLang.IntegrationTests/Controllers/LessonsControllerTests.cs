@@ -235,12 +235,17 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
             var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
             var lesson = new Lesson("Present Perfect", "Learn the present perfect tense", ReferenceLevel.B1);
             lesson.Publish();
-            dbContext.Lessons.Add(lesson);
 
-            var ex1 = new Exercise(lesson.Id, ExerciseType.MultipleChoice, "Exercise 1", 1);
-            var ex2 = new Exercise(lesson.Id, ExerciseType.Translation, "Exercise 2", 2);
+            var ex1 = new Exercise(ExerciseType.MultipleChoice, "Exercise 1", "CorrectAnswer 1");
+            var ex2 = new Exercise(ExerciseType.Translation, "Exercise 2", "CorrectAnswer 2");
             dbContext.Exercises.AddRange(ex1, ex2);
 
+            var block1 = LessonBlock.CreateExerciseBlock(lesson.Id, 1, ex1.Id);
+            var block2 = LessonBlock.CreateExerciseBlock(lesson.Id, 2, ex2.Id);
+            lesson.AddLessonBlock(block1);
+            lesson.AddLessonBlock(block2);
+
+            dbContext.Lessons.Add(lesson);
             dbContext.SaveChanges();
             lessonId = lesson.Id;
         }
@@ -263,6 +268,26 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal("Learn the present perfect tense", result.Description);
         Assert.Equal("B1", result.ReferenceLevel);
         Assert.Equal(2, result.ExerciseCount);
+
+        // Verify lesson blocks structure and sequence
+        Assert.NotNull(result.LessonBlocks);
+        Assert.Equal(2, result.LessonBlocks.Count);
+
+        var b1 = result.LessonBlocks.Find(b => b.Sequence == 1);
+        Assert.NotNull(b1);
+        Assert.Equal("Exercise", b1.Type);
+        Assert.NotNull(b1.Exercise);
+        Assert.Equal("MultipleChoice", b1.Exercise.Type);
+        Assert.Equal("Exercise 1", b1.Exercise.Statement);
+        Assert.Equal("CorrectAnswer 1", b1.Exercise.CorrectAnswer);
+
+        var b2 = result.LessonBlocks.Find(b => b.Sequence == 2);
+        Assert.NotNull(b2);
+        Assert.Equal("Exercise", b2.Type);
+        Assert.NotNull(b2.Exercise);
+        Assert.Equal("Translation", b2.Exercise.Type);
+        Assert.Equal("Exercise 2", b2.Exercise.Statement);
+        Assert.Equal("CorrectAnswer 2", b2.Exercise.CorrectAnswer);
     }
 
     [Fact]
@@ -833,5 +858,25 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
         public string Description { get; set; } = string.Empty;
         public string ReferenceLevel { get; set; } = string.Empty;
         public int ExerciseCount { get; set; }
+        public List<LessonBlockResponseDto> LessonBlocks { get; set; } = [];
+    }
+
+    private class LessonBlockResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public int Sequence { get; set; }
+        public string ConfigurationValue { get; set; } = string.Empty;
+        public Guid? ReferencedExerciseId { get; set; }
+        public ExerciseResponseDto? Exercise { get; set; }
+    }
+
+    private class ExerciseResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string Statement { get; set; } = string.Empty;
+        public string? CorrectAnswer { get; set; }
+        public string? AudioResourceUrl { get; set; }
     }
 }

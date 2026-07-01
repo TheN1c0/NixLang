@@ -27,7 +27,7 @@ public interface ILessonRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a published lesson by its identifier, including its exercises.
+    /// Gets a published lesson by its identifier, including its lesson blocks and associated exercises.
     /// </summary>
     Task<Lesson?> GetPublishedByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }
