@@ -11,15 +11,18 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IUnitOfWork _unitOfWork;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -41,10 +44,14 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
             throw new InvalidCredentialsException();
         }
 
-        // 4. Generate JWT token
+        // 4. Record login and save changes
+        user.RecordLogin();
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // 5. Generate JWT token
         var (token, expiresAt) = _jwtTokenGenerator.GenerateToken(user);
 
-        // 5. Return minimal token response
+        // 6. Return minimal token response
         return new LoginResponse(token, expiresAt);
     }
 }

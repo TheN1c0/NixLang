@@ -13,6 +13,7 @@ public class LoginCommandHandlerTests
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly LoginCommandHandler _handler;
 
     public LoginCommandHandlerTests()
@@ -20,7 +21,8 @@ public class LoginCommandHandlerTests
         _userRepository = Substitute.For<IUserRepository>();
         _passwordHasher = Substitute.For<IPasswordHasher>();
         _jwtTokenGenerator = Substitute.For<IJwtTokenGenerator>();
-        _handler = new LoginCommandHandler(_userRepository, _passwordHasher, _jwtTokenGenerator);
+        _unitOfWork = Substitute.For<IUnitOfWork>();
+        _handler = new LoginCommandHandler(_userRepository, _passwordHasher, _jwtTokenGenerator, _unitOfWork);
     }
 
     [Fact]
@@ -50,6 +52,11 @@ public class LoginCommandHandlerTests
         Assert.NotNull(result);
         Assert.Equal(expectedToken, result.AccessToken);
         Assert.Equal(expiryTime, result.ExpiresAt);
+
+        // Verify LastLoginAt is recorded and saved
+        Assert.NotNull(user.LastLoginAt);
+        Assert.True((DateTime.UtcNow - user.LastLoginAt.Value).TotalSeconds < 5);
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -68,6 +75,7 @@ public class LoginCommandHandlerTests
 
         _passwordHasher.DidNotReceive().VerifyPassword(Arg.Any<string>(), Arg.Any<string>());
         _jwtTokenGenerator.DidNotReceive().GenerateToken(Arg.Any<User>());
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -90,5 +98,6 @@ public class LoginCommandHandlerTests
             _handler.Handle(command, CancellationToken.None));
 
         _jwtTokenGenerator.DidNotReceive().GenerateToken(Arg.Any<User>());
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

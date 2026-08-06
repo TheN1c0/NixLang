@@ -17,6 +17,7 @@ public class User : BaseEntity
     public string PasswordHash { get; private set; }
     public UserRole Role { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public DateTime? LastLoginAt { get; private set; }
 
     protected User() : base()
     {
@@ -47,5 +48,10 @@ public class User : BaseEntity
     public void UpdateRole(UserRole role)
     {
         Role = role;
+    }
+
+    public void RecordLogin()
+    {
+        LastLoginAt = DateTime.UtcNow;
     }
 }
