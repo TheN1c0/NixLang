@@ -27,7 +27,7 @@ public class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
         builder.Property(e => e.AudioResourceUrl)
             .HasMaxLength(500);
 
-        builder.HasMany<ExerciseOption>()
+        builder.HasMany(e => e.Options)
             .WithOne()
             .HasForeignKey(o => o.ExerciseId)
             .OnDelete(DeleteBehavior.Cascade);

@@ -54,4 +54,24 @@ public class User : BaseEntity
     {
         LastLoginAt = DateTime.UtcNow;
     }
+
+    public void UpdateProfile(string fullName, Email email)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new ArgumentException("Full name cannot be empty.", nameof(fullName));
+
+        if (email is null)
+            throw new ArgumentNullException(nameof(email));
+
+        FullName = fullName.Trim();
+        Email = email;
+    }
+
+    public void UpdatePassword(string newPasswordHash)
+    {
+        if (string.IsNullOrWhiteSpace(newPasswordHash))
+            throw new ArgumentException("Password hash cannot be empty.", nameof(newPasswordHash));
+
+        PasswordHash = newPasswordHash;
+    }
 }

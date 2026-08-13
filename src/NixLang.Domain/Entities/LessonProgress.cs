@@ -39,4 +39,28 @@ public class LessonProgress : BaseEntity
         ProgressPercentage = 0m;
         StartedAt = DateTime.UtcNow;
     }
+
+    public void UpdateProgress(decimal progressPercentage, ProgressStatus status)
+    {
+        ProgressPercentage = progressPercentage;
+        Status = status;
+        if (status == ProgressStatus.Completed && CompletedAt == null)
+        {
+            CompletedAt = DateTime.UtcNow;
+        }
+        else if (status != ProgressStatus.Completed)
+        {
+            CompletedAt = null;
+        }
+    }
+
+    public void AddExerciseResult(Guid exerciseId, string givenAnswer, bool isCorrect)
+    {
+        var existing = _exerciseResults.FirstOrDefault(r => r.ExerciseId == exerciseId);
+        if (existing != null)
+        {
+            _exerciseResults.Remove(existing);
+        }
+        _exerciseResults.Add(new ExerciseResult(Id, exerciseId, givenAnswer, isCorrect));
+    }
 }

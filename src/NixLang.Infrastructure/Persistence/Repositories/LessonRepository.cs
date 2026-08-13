@@ -77,6 +77,7 @@ public class LessonRepository : ILessonRepository
         return await _dbContext.Lessons
             .Include(l => l.LessonBlocks)
                 .ThenInclude(b => b.Exercise)
+                    .ThenInclude(e => e!.Options)
             .Include(l => l.Categories)
             .FirstOrDefaultAsync(l => l.Id == id && l.Status == PublicationStatus.Published, cancellationToken);
     }

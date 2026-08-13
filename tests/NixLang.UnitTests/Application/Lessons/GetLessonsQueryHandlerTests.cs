@@ -1,6 +1,7 @@
 using NSubstitute;
 using NixLang.Application.Common.Models;
 using NixLang.Application.Lessons.Queries.GetLessons;
+using NixLang.Application.Common.Interfaces;
 using NixLang.Domain.Entities;
 using NixLang.Domain.Enums;
 using NixLang.Domain.Repositories;
@@ -10,12 +11,29 @@ namespace NixLang.UnitTests.Application.Lessons;
 public class GetLessonsQueryHandlerTests
 {
     private readonly ILessonRepository _lessonRepository;
+    private readonly IFavoriteRepository _favoriteRepository;
+    private readonly ILessonProgressRepository _progressRepository;
+    private readonly ICurrentUserService _currentUserService;
     private readonly GetLessonsQueryHandler _handler;
 
     public GetLessonsQueryHandlerTests()
     {
         _lessonRepository = Substitute.For<ILessonRepository>();
-        _handler = new GetLessonsQueryHandler(_lessonRepository);
+        _favoriteRepository = Substitute.For<IFavoriteRepository>();
+        _progressRepository = Substitute.For<ILessonProgressRepository>();
+        _currentUserService = Substitute.For<ICurrentUserService>();
+
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _favoriteRepository.GetByUserIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new List<Favorite>()));
+        _progressRepository.GetByUserIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new List<LessonProgress>()));
+
+        _handler = new GetLessonsQueryHandler(
+            _lessonRepository,
+            _favoriteRepository,
+            _progressRepository,
+            _currentUserService);
     }
 
     [Fact]

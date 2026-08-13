@@ -802,6 +802,55 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
         dbContext.SaveChanges();
     }
 
+    [Fact]
+    public async Task SaveLessonProgress_WithExerciseResults_ShouldSaveSuccessfully()
+    {
+        // Arrange
+        Guid lessonId;
+        Guid exerciseId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var lesson = new Lesson("Present Simple Test Progress", "Learn present simple", ReferenceLevel.A1);
+            lesson.Publish();
+            
+            var exercise = new Exercise(ExerciseType.MultipleChoice, "Statement", "CorrectAnswer");
+            dbContext.Exercises.Add(exercise);
+            dbContext.SaveChanges();
+            
+            var block = LessonBlock.CreateExerciseBlock(lesson.Id, 1, exercise.Id);
+            lesson.AddLessonBlock(block);
+            
+            dbContext.Lessons.Add(lesson);
+            dbContext.SaveChanges();
+            
+            lessonId = lesson.Id;
+            exerciseId = exercise.Id;
+        }
+        
+        var token = await RegisterAndLogin();
+        
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/lessons/{lessonId}/progress");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        
+        var requestBody = new
+        {
+            ProgressPercentage = 100.00m,
+            Status = "Completed",
+            Results = new[]
+            {
+                new { ExerciseId = exerciseId, GivenAnswer = "CorrectAnswer", IsCorrect = true }
+            }
+        };
+        request.Content = JsonContent.Create(requestBody);
+        
+        // Act
+        var response = await _client.SendAsync(request);
+        
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     private async Task<string> RegisterAndLogin()
     {
         var email = $"lessons_test_{Guid.NewGuid()}@example.com";

@@ -16,6 +16,9 @@ public class Exercise : BaseEntity
     public string? CorrectAnswer { get; private set; }
     public string? AudioResourceUrl { get; private set; }
 
+    private readonly List<ExerciseOption> _options = [];
+    public IReadOnlyCollection<ExerciseOption> Options => _options.AsReadOnly();
+
     protected Exercise() : base()
     {
         Statement = string.Empty;

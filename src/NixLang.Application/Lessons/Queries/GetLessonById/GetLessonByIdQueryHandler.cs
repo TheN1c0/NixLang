@@ -40,7 +40,12 @@ public class GetLessonByIdQueryHandler : IRequestHandler<GetLessonByIdQuery, Les
                     b.Exercise.Type.ToString(),
                     b.Exercise.Statement,
                     b.Exercise.CorrectAnswer,
-                    b.Exercise.AudioResourceUrl) : null))
+                    b.Exercise.AudioResourceUrl,
+                    b.Exercise.Options
+                        .Select(o => new ExerciseOptionDto(o.Id, o.Text, o.DisplayOrder))
+                        .OrderBy(o => o.DisplayOrder)
+                        .ToList()
+                        .AsReadOnly()) : null))
             .ToList()
             .AsReadOnly();
 
