@@ -31,4 +31,16 @@ public class Category : BaseEntity
         Name = name.Trim();
         Description = description.Trim();
     }
+
+    public void Update(string name, string description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Category name cannot be empty.", nameof(name));
+
+        if (string.IsNullOrWhiteSpace(description))
+            throw new ArgumentException("Category description cannot be empty.", nameof(description));
+
+        Name = name.Trim();
+        Description = description.Trim();
+    }
 }

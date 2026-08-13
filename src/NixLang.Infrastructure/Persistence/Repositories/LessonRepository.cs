@@ -81,4 +81,54 @@ public class LessonRepository : ILessonRepository
             .Include(l => l.Categories)
             .FirstOrDefaultAsync(l => l.Id == id && l.Status == PublicationStatus.Published, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Lesson>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Lessons
+            .AsNoTracking()
+            .OrderByDescending(l => l.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> CountAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Lessons.CountAsync(cancellationToken);
+    }
+
+    public async Task<Lesson?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Lessons
+            .Include(l => l.LessonBlocks)
+                .ThenInclude(b => b.Exercise)
+                    .ThenInclude(e => e!.Options)
+            .Include(l => l.Categories)
+            .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
+    }
+
+    public async Task AddAsync(Lesson lesson, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.Lessons.AddAsync(lesson, cancellationToken);
+    }
+
+    public async Task DeleteAsync(Lesson lesson, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Lessons.Remove(lesson);
+        await Task.CompletedTask;
+    }
+
+    public async Task ClearLessonBlocksAsync(Guid lessonId, CancellationToken cancellationToken = default)
+    {
+        var blocks = await _dbContext.LessonBlocks
+            .Where(b => b.LessonId == lessonId)
+            .ToListAsync(cancellationToken);
+        _dbContext.LessonBlocks.RemoveRange(blocks);
+    }
+
+    public async Task AddLessonBlockAsync(LessonBlock block, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.LessonBlocks.AddAsync(block, cancellationToken);
+    }
 }
+

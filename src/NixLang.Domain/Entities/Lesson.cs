@@ -122,6 +122,15 @@ public class Lesson : BaseEntity
     }
 
     /// <summary>
+    /// Transitions the lesson to Draft status.
+    /// </summary>
+    public void SetDraft()
+    {
+        Status = PublicationStatus.Draft;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
     /// Transitions the lesson to Published status, making it visible in the catalog.
     /// </summary>
     public void Publish()
@@ -136,6 +145,32 @@ public class Lesson : BaseEntity
     public void Disable()
     {
         Status = PublicationStatus.Disabled;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Update(string title, string description, ReferenceLevel referenceLevel)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Title cannot be empty.", nameof(title));
+
+        if (string.IsNullOrWhiteSpace(description))
+            throw new ArgumentException("Description cannot be empty.", nameof(description));
+
+        Title = title.Trim();
+        Description = description.Trim();
+        ReferenceLevel = referenceLevel;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void ClearCategories()
+    {
+        _categories.Clear();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void ClearLessonBlocks()
+    {
+        _lessonBlocks.Clear();
         UpdatedAt = DateTime.UtcNow;
     }
 }

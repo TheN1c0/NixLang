@@ -42,6 +42,14 @@ public class ExceptionHandlingMiddleware
                 StatusCodes.Status409Conflict,
                 CreateErrorResponse("Conflict", emailEx.Message)),
 
+            CategoryAlreadyExistsException catDupEx => (
+                StatusCodes.Status409Conflict,
+                CreateErrorResponse("Conflict", catDupEx.Message)),
+
+            ExerciseInUseException exInUseEx => (
+                StatusCodes.Status409Conflict,
+                CreateErrorResponse("Conflict", exInUseEx.Message)),
+
             InvalidCredentialsException credEx => (
                 StatusCodes.Status401Unauthorized,
                 CreateErrorResponse("Unauthorized", credEx.Message)),
@@ -53,6 +61,14 @@ public class ExceptionHandlingMiddleware
             LessonNotFoundException lessonNotFoundEx => (
                 StatusCodes.Status404NotFound,
                 CreateErrorResponse("Not Found", lessonNotFoundEx.Message)),
+
+            CategoryNotFoundException catNotFoundEx => (
+                StatusCodes.Status404NotFound,
+                CreateErrorResponse("Not Found", catNotFoundEx.Message)),
+
+            ExerciseNotFoundException exNotFoundEx => (
+                StatusCodes.Status404NotFound,
+                CreateErrorResponse("Not Found", exNotFoundEx.Message)),
 
             ArgumentException argEx => (
                 StatusCodes.Status400BadRequest,
