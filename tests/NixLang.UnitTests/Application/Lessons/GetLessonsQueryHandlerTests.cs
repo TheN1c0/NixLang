@@ -33,8 +33,10 @@ public class GetLessonsQueryHandlerTests
             _lessonRepository,
             _favoriteRepository,
             _progressRepository,
-            _currentUserService);
+            _currentUserService,
+            Substitute.For<Microsoft.Extensions.Logging.ILogger<GetLessonsQueryHandler>>());
     }
+
 
     [Fact]
     public async Task Handle_WithPublishedLessons_ShouldReturnPagedResult()

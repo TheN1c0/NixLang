@@ -59,8 +59,12 @@ public class LessonProgress : BaseEntity
         var existing = _exerciseResults.FirstOrDefault(r => r.ExerciseId == exerciseId);
         if (existing != null)
         {
-            _exerciseResults.Remove(existing);
+            existing.Update(givenAnswer, isCorrect);
         }
-        _exerciseResults.Add(new ExerciseResult(Id, exerciseId, givenAnswer, isCorrect));
+        else
+        {
+            _exerciseResults.Add(new ExerciseResult(Id, exerciseId, givenAnswer, isCorrect));
+        }
     }
 }
+

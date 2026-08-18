@@ -36,4 +36,12 @@ public class ExerciseResult : BaseEntity
         IsCorrect = isCorrect;
         AnsweredAt = DateTime.UtcNow;
     }
+
+    public void Update(string givenAnswer, bool isCorrect)
+    {
+        GivenAnswer = givenAnswer ?? string.Empty;
+        IsCorrect = isCorrect;
+        AnsweredAt = DateTime.UtcNow;
+    }
 }
+
