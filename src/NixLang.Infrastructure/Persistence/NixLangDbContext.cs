@@ -16,6 +16,7 @@ public class NixLangDbContext : DbContext, IUnitOfWork
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ExerciseOption> ExerciseOptions => Set<ExerciseOption>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<EducationalContent> EducationalContents => Set<EducationalContent>();
     public DbSet<Favorite> Favorites => Set<Favorite>();
     public DbSet<LessonProgress> LessonProgress => Set<LessonProgress>();
     public DbSet<ExerciseResult> ExerciseResults => Set<ExerciseResult>();

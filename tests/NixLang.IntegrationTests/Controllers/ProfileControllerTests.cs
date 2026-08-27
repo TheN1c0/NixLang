@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using NixLang.Application.Users.Commands.Login;
 using NixLang.Application.Users.Commands.RegisterUser;
+using NixLang.Application.Users.Commands.DeleteAccount;
 using NixLang.Infrastructure.Persistence;
 
 namespace NixLang.IntegrationTests.Controllers;
@@ -130,6 +131,71 @@ public class ProfileControllerTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteProfile_WithoutToken_ShouldReturn401()
+    {
+        // Arrange
+        var deleteCommand = new DeleteAccountCommand("somePassword");
+        var request = new HttpRequestMessage(HttpMethod.Delete, "/api/profile")
+        {
+            Content = JsonContent.Create(deleteCommand)
+        };
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteProfile_WithWrongPassword_ShouldReturn401()
+    {
+        // Arrange
+        var email = $"delete_wrong_pass_{Guid.NewGuid()}@example.com";
+        var token = await RegisterAndLogin("User Delete", email, "correctPassword123");
+
+        var deleteCommand = new DeleteAccountCommand("wrongPassword999");
+        var request = new HttpRequestMessage(HttpMethod.Delete, "/api/profile")
+        {
+            Content = JsonContent.Create(deleteCommand)
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteProfile_WithValidPassword_ShouldDeleteUserSuccessfully()
+    {
+        // Arrange
+        var email = $"delete_success_{Guid.NewGuid()}@example.com";
+        var password = "validPassword123";
+        var token = await RegisterAndLogin("User To Delete", email, password);
+
+        var deleteCommand = new DeleteAccountCommand(password);
+        var request = new HttpRequestMessage(HttpMethod.Delete, "/api/profile")
+        {
+            Content = JsonContent.Create(deleteCommand)
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Verify that user can no longer log in
+        var loginCommand = new LoginCommand(email, password);
+        var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginCommand);
+        Assert.Equal(HttpStatusCode.Unauthorized, loginResponse.StatusCode);
     }
 
     /// <summary>

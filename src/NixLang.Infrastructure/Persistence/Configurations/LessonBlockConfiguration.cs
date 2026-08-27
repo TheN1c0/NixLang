@@ -32,6 +32,7 @@ public class LessonBlockConfiguration : IEntityTypeConfiguration<LessonBlock>
             .HasMaxLength(4000);
 
         builder.Property(b => b.ReferencedExerciseId);
+        builder.Property(b => b.ReferencedEducationalContentId);
 
         builder.HasIndex(b => new { b.LessonId, b.Sequence })
             .IsUnique();
@@ -39,6 +40,11 @@ public class LessonBlockConfiguration : IEntityTypeConfiguration<LessonBlock>
         builder.HasOne(b => b.Exercise)
             .WithMany()
             .HasForeignKey(b => b.ReferencedExerciseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(b => b.EducationalContent)
+            .WithMany()
+            .HasForeignKey(b => b.ReferencedEducationalContentId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

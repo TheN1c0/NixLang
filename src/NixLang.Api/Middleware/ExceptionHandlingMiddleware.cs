@@ -50,6 +50,10 @@ public class ExceptionHandlingMiddleware
                 StatusCodes.Status409Conflict,
                 CreateErrorResponse("Conflict", exInUseEx.Message)),
 
+            EducationalContentInUseException contentInUseEx => (
+                StatusCodes.Status409Conflict,
+                CreateErrorResponse("Conflict", contentInUseEx.Message)),
+
             InvalidCredentialsException credEx => (
                 StatusCodes.Status401Unauthorized,
                 CreateErrorResponse("Unauthorized", credEx.Message)),
@@ -61,6 +65,10 @@ public class ExceptionHandlingMiddleware
             LessonNotFoundException lessonNotFoundEx => (
                 StatusCodes.Status404NotFound,
                 CreateErrorResponse("Not Found", lessonNotFoundEx.Message)),
+
+            EducationalContentNotFoundException contentNotFoundEx => (
+                StatusCodes.Status404NotFound,
+                CreateErrorResponse("Not Found", contentNotFoundEx.Message)),
 
             CategoryNotFoundException catNotFoundEx => (
                 StatusCodes.Status404NotFound,

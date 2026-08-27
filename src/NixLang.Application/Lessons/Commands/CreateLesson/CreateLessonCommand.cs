@@ -2,7 +2,11 @@ using MediatR;
 
 namespace NixLang.Application.Lessons.Commands.CreateLesson;
 
-public record CreateLessonBlockDto(string Type, string ConfigurationValue, Guid? ReferencedExerciseId);
+public record CreateLessonBlockDto(
+    string Type, 
+    string ConfigurationValue, 
+    Guid? ReferencedExerciseId, 
+    Guid? ReferencedEducationalContentId = null);
 
 public record CreateLessonCommand(
     string Title,

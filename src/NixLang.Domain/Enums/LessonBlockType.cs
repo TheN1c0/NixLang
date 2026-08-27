@@ -9,5 +9,6 @@ public enum LessonBlockType
     Exercise,
     Feedback,
     Review,
-    Summary
+    Summary,
+    Content
 }

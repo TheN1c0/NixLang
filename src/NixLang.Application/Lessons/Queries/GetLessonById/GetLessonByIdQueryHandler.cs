@@ -45,7 +45,15 @@ public class GetLessonByIdQueryHandler : IRequestHandler<GetLessonByIdQuery, Les
                         .Select(o => new ExerciseOptionDto(o.Id, o.Text, o.DisplayOrder))
                         .OrderBy(o => o.DisplayOrder)
                         .ToList()
-                        .AsReadOnly()) : null))
+                        .AsReadOnly()) : null,
+                b.ReferencedEducationalContentId,
+                b.EducationalContent != null ? new EducationalContentSummaryDto(
+                    b.EducationalContent.Id,
+                    b.EducationalContent.Title,
+                    b.EducationalContent.Summary,
+                    b.EducationalContent.Body,
+                    b.EducationalContent.Type.ToString(),
+                    b.EducationalContent.ReferenceLevel?.ToString()) : null))
             .ToList()
             .AsReadOnly();
 

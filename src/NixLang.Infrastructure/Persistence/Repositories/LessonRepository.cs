@@ -78,6 +78,8 @@ public class LessonRepository : ILessonRepository
             .Include(l => l.LessonBlocks)
                 .ThenInclude(b => b.Exercise)
                     .ThenInclude(e => e!.Options)
+            .Include(l => l.LessonBlocks)
+                .ThenInclude(b => b.EducationalContent)
             .Include(l => l.Categories)
             .FirstOrDefaultAsync(l => l.Id == id && l.Status == PublicationStatus.Published, cancellationToken);
     }
@@ -103,6 +105,8 @@ public class LessonRepository : ILessonRepository
             .Include(l => l.LessonBlocks)
                 .ThenInclude(b => b.Exercise)
                     .ThenInclude(e => e!.Options)
+            .Include(l => l.LessonBlocks)
+                .ThenInclude(b => b.EducationalContent)
             .Include(l => l.Categories)
             .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
     }

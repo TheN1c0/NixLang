@@ -75,39 +75,50 @@ public class UpdateLessonCommandHandler : IRequestHandler<UpdateLessonCommand, b
         }
 
         // Rebuild Blocks
+        if (request.LessonBlocks == null || !request.LessonBlocks.Any(b => 
+            string.Equals(b.Type, LessonBlockType.Exercise.ToString(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new ArgumentException("A lesson must contain at least one exercise.");
+        }
+
         await _lessonRepository.ClearLessonBlocksAsync(lesson.Id, cancellationToken);
         lesson.ClearLessonBlocks();
-        if (request.LessonBlocks != null && request.LessonBlocks.Count > 0)
+        int seq = 1;
+        foreach (var blockDto in request.LessonBlocks)
         {
-            int seq = 1;
-            foreach (var blockDto in request.LessonBlocks)
+            if (!Enum.TryParse<LessonBlockType>(blockDto.Type, true, out var blockType))
             {
-                if (!Enum.TryParse<LessonBlockType>(blockDto.Type, true, out var blockType))
-                {
-                    throw new ArgumentException($"Invalid lesson block type: {blockDto.Type}");
-                }
-
-                LessonBlock block;
-                if (blockType == LessonBlockType.Exercise)
-                {
-                    if (blockDto.ReferencedExerciseId == null || blockDto.ReferencedExerciseId == Guid.Empty)
-                    {
-                        throw new ArgumentException("Exercise blocks must have a referenced exercise ID.");
-                    }
-                    block = LessonBlock.CreateExerciseBlock(lesson.Id, seq++, blockDto.ReferencedExerciseId.Value);
-                }
-                else
-                {
-                    block = LessonBlock.CreateInformationalBlock(
-                        lesson.Id,
-                        blockType,
-                        seq++,
-                        new BlockConfiguration(blockDto.ConfigurationValue));
-                }
-
-                await _lessonRepository.AddLessonBlockAsync(block, cancellationToken);
-                lesson.AddLessonBlock(block);
+                throw new ArgumentException($"Invalid lesson block type: {blockDto.Type}");
             }
+
+            LessonBlock block;
+            if (blockType == LessonBlockType.Exercise)
+            {
+                if (blockDto.ReferencedExerciseId == null || blockDto.ReferencedExerciseId == Guid.Empty)
+                {
+                    throw new ArgumentException("Exercise blocks must have a referenced exercise ID.");
+                }
+                block = LessonBlock.CreateExerciseBlock(lesson.Id, seq++, blockDto.ReferencedExerciseId.Value);
+            }
+            else if (blockType == LessonBlockType.Content)
+            {
+                if (blockDto.ReferencedEducationalContentId == null || blockDto.ReferencedEducationalContentId == Guid.Empty)
+                {
+                    throw new ArgumentException("Content blocks must have a referenced educational content ID.");
+                }
+                block = LessonBlock.CreateContentBlock(lesson.Id, seq++, blockDto.ReferencedEducationalContentId.Value);
+            }
+            else
+            {
+                block = LessonBlock.CreateInformationalBlock(
+                    lesson.Id,
+                    blockType,
+                    seq++,
+                    new BlockConfiguration(blockDto.ConfigurationValue));
+            }
+
+            await _lessonRepository.AddLessonBlockAsync(block, cancellationToken);
+            lesson.AddLessonBlock(block);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

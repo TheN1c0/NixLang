@@ -48,6 +48,14 @@ public class CreateLessonCommandHandler : IRequestHandler<CreateLessonCommand, G
         // Add blocks if specified
         if (request.LessonBlocks != null && request.LessonBlocks.Count > 0)
         {
+            var hasExercise = request.LessonBlocks.Any(b => 
+                string.Equals(b.Type, LessonBlockType.Exercise.ToString(), StringComparison.OrdinalIgnoreCase));
+
+            if (!hasExercise)
+            {
+                throw new ArgumentException("A lesson must contain at least one exercise.");
+            }
+
             int seq = 1;
             foreach (var blockDto in request.LessonBlocks)
             {
@@ -65,6 +73,14 @@ public class CreateLessonCommandHandler : IRequestHandler<CreateLessonCommand, G
                     }
                     block = LessonBlock.CreateExerciseBlock(lesson.Id, seq++, blockDto.ReferencedExerciseId.Value);
                 }
+                else if (blockType == LessonBlockType.Content)
+                {
+                    if (blockDto.ReferencedEducationalContentId == null || blockDto.ReferencedEducationalContentId == Guid.Empty)
+                    {
+                        throw new ArgumentException("Content blocks must have a referenced educational content ID.");
+                    }
+                    block = LessonBlock.CreateContentBlock(lesson.Id, seq++, blockDto.ReferencedEducationalContentId.Value);
+                }
                 else
                 {
                     block = LessonBlock.CreateInformationalBlock(
@@ -76,6 +92,10 @@ public class CreateLessonCommandHandler : IRequestHandler<CreateLessonCommand, G
 
                 lesson.AddLessonBlock(block);
             }
+        }
+        else
+        {
+            throw new ArgumentException("A lesson must contain at least one exercise.");
         }
 
         await _lessonRepository.AddAsync(lesson, cancellationToken);

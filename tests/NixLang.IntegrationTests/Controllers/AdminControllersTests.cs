@@ -192,7 +192,26 @@ public class AdminControllersTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var adminToken = await CreateAdminAndLogin();
 
-        // 1. Create Lesson
+        // 1. Create Exercise for the lesson
+        var createExCommand = new CreateExerciseCommand(
+            "MultipleChoice",
+            "What is the capital of England?",
+            "London",
+            null,
+            new List<CreateExerciseOptionDto>
+            {
+                new CreateExerciseOptionDto("London", true, 1),
+                new CreateExerciseOptionDto("Manchester", false, 2)
+            });
+        var createExRequest = new HttpRequestMessage(HttpMethod.Post, "/api/admin/exercises")
+        {
+            Content = JsonContent.Create(createExCommand)
+        };
+        createExRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+        var createExResponse = await _client.SendAsync(createExRequest);
+        var exerciseId = (await createExResponse.Content.ReadFromJsonAsync<IdResponse>())!.Id;
+
+        // 2. Create Lesson with Heading and Exercise block
         var createCommand = new CreateLessonCommand(
             "Admin Lesson",
             "Admin Lesson Description",
@@ -200,7 +219,8 @@ public class AdminControllersTests : IClassFixture<CustomWebApplicationFactory>
             null,
             new List<CreateLessonBlockDto>
             {
-                new CreateLessonBlockDto("Heading", "Introduction", null)
+                new CreateLessonBlockDto("Heading", "Introduction", null),
+                new CreateLessonBlockDto("Exercise", string.Empty, exerciseId)
             });
 
         var createRequest = new HttpRequestMessage(HttpMethod.Post, "/api/admin/lessons")
@@ -215,7 +235,7 @@ public class AdminControllersTests : IClassFixture<CustomWebApplicationFactory>
         Assert.NotNull(createResult);
         var lessonId = createResult.Id;
 
-        // 2. Get Lessons
+        // 3. Get Lessons
         var getRequest = new HttpRequestMessage(HttpMethod.Get, "/api/admin/lessons");
         getRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
         var getResponse = await _client.SendAsync(getRequest);
@@ -224,7 +244,7 @@ public class AdminControllersTests : IClassFixture<CustomWebApplicationFactory>
         Assert.NotNull(lessons);
         Assert.Contains(lessons.Items, l => l.Id == lessonId && l.Title == "Admin Lesson");
 
-        // 3. Update Lesson
+        // 4. Update Lesson
         var updateCommand = new UpdateLessonCommand(
             lessonId,
             "Admin Lesson Updated",
@@ -234,7 +254,8 @@ public class AdminControllersTests : IClassFixture<CustomWebApplicationFactory>
             null,
             new List<CreateLessonBlockDto>
             {
-                new CreateLessonBlockDto("Heading", "Introduction Updated", null)
+                new CreateLessonBlockDto("Heading", "Introduction Updated", null),
+                new CreateLessonBlockDto("Exercise", string.Empty, exerciseId)
             });
 
         var updateRequest = new HttpRequestMessage(HttpMethod.Put, $"/api/admin/lessons/{lessonId}")
