@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IExerciseRepository, ExerciseRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IEducationalContentRepository, EducationalContentRepository>();
+        services.AddScoped<ICollectionRepository, CollectionRepository>();
 
         // Register Unit of Work mapped to DbContext
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<NixLangDbContext>());

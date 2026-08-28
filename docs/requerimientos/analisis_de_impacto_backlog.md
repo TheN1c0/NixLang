@@ -97,3 +97,62 @@ Para cumplir con el principio general, las historias de usuario no mencionan el 
 * **Redacción Ajustada**:
   * **HU-089**: *Como administrador, quiero eliminar ejercicios obsoletos que ya no se utilicen en ninguna lección.*
   * **HU-090**: *Como administrador, quiero recibir una advertencia si intento eliminar un ejercicio que está siendo utilizado en algún contenido de lección activo.*
+
+---
+
+## 3. Nuevos Requerimientos Funcionales (RF) — Colecciones
+
+### RF-048 — Visualización de Colecciones en Catálogo
+* **Comportamiento Esperado**: El sistema debe permitir al usuario explorar las colecciones de aprendizaje disponibles, visualizando su título, descripción, icono/imagen representativo, nivel referencial sugerido y porcentaje de progreso derivado.
+* **Impacto del Dominio**: Se consultan las entidades `Colección` con estado `Published`. El progreso se calcula dinámicamente según las lecciones completadas por el usuario autenticado.
+
+### RF-049 — Detalle de Colección y Acceso Libre a Lecciones
+* **Comportamiento Esperado**: El sistema debe permitir visualizar el detalle de una colección, listando todas sus lecciones asociadas en el orden sugerido, con su estado de avance y permitiendo acceder directamente a cualquiera de ellas sin bloqueos.
+* **Impacto del Dominio**: Se recupera la colección con sus `ColecciónLección` ordenadas y las lecciones publicadas vinculadas, junto con el estado del usuario (`LessonProgress`).
+
+### RF-050 — Cálculo de Progreso Agregado de Colección
+* **Comportamiento Esperado**: El sistema debe calcular y mostrar el avance global del usuario en una colección (porcentaje y conteo de lecciones completadas respecto al total).
+* **Impacto del Dominio**: Cálculo derivado en el Application layer ($N_{completadas} / N_{total} \times 100$), sin persistencia de estado redundante.
+
+### RF-051 — Gestión de Colecciones por Administrador (CRUD)
+* **Comportamiento Esperado**: El administrador debe poder crear, listar, consultar, editar y eliminar colecciones, así como alternar su estado de publicación (`Borrador`, `Publicada`, `Desactivada`).
+* **Impacto del Dominio**: Operaciones sobre el Agregado `Colección`.
+
+### RF-052 — Asignación y Reordenación de Lecciones en Colección
+* **Comportamiento Esperado**: El administrador debe poder vincular lecciones del catálogo a una colección, definir su secuencia pedagógica sugerida y desvincular lecciones cuando sea necesario.
+* **Impacto del Dominio**: Gestión de la colección interna `ColecciónLección` dentro del Agregado `Colección`.
+
+### RF-053 — Filtrado y Búsqueda de Contenido por Colección
+* **Comportamiento Esperado**: El sistema debe permitir filtrar lecciones del catálogo por colección o buscar colecciones por texto y nivel sugerido.
+
+---
+
+## 4. Nuevas Historias de Usuario (HU) — Colecciones
+
+### HU-140 — Exploración de Colecciones
+* **Redacción**: *Como estudiante, quiero ver una lista de colecciones temáticas y experienciales en el catálogo para descubrir contenidos organizados por situaciones de la vida real.*
+
+### HU-141 — Consulta de Detalle de Colección
+* **Redacción**: *Como estudiante, quiero ver el detalle de una colección con sus lecciones asociadas para entender los temas que cubre y su secuencia pedagógica recomendada.*
+
+### HU-142 — Acceso Libre a Lecciones de una Colección
+* **Redacción**: *Como estudiante, quiero poder iniciar cualquier lección dentro de una colección directamente y sin prerrequisitos para mantener mi libertad de aprendizaje.*
+
+### HU-143 — Visualización de Progreso en Colección
+* **Redacción**: *Como estudiante, quiero ver mi porcentaje de avance y cuántas lecciones he completado dentro de una colección para seguir mi ritmo de estudio.*
+
+### HU-144 — Creación de Colección por Admin
+* **Redacción**: *Como administrador, quiero crear nuevas colecciones con título, descripción y nivel para empaquetar lecciones bajo contextos de aprendizaje atractivos.*
+
+### HU-145 — Gestión de Estado de Colección
+* **Redacción**: *Como administrador, quiero publicar, guardar en borrador o desactivar colecciones para controlar cuándo son visibles para los estudiantes.*
+
+### HU-146 — Asociación de Lecciones a Colección
+* **Redacción**: *Como administrador, quiero asociar lecciones existentes a una colección para estructurar su contenido didáctico.*
+
+### HU-147 — Reordenamiento de Lecciones en Colección
+* **Redacción**: *Como administrador, quiero reordenar la secuencia sugerida de lecciones dentro de una colección para ofrecer un recorrido pedagógico coherente.*
+
+### HU-148 — Eliminación de Colección
+* **Redacción**: *Como administrador, quiero eliminar una colección obsoleta asegurando que sus lecciones permanezcan intactas en el catálogo general.*
+

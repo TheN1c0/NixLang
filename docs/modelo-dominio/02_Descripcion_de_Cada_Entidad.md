@@ -107,3 +107,20 @@ Permite construir una colección personalizada de contenido de interés para fac
 Representa la asociación utilizada para organizar las lecciones dentro de las categorías temáticas del catálogo.
 
 Su finalidad es mantener una clasificación flexible del contenido educativo.
+
+---
+
+## 2.13 Colección
+
+Agrupación estructurada de lecciones orientada a un tema, propósito, contexto experiencial o caso de uso del mundo real (por ejemplo: *Inglés para viajar*, *Inglés para entrevistas laborales*, *Inglés con series*).
+
+Su propósito es contextualizar y enriquecer el descubrimiento de contenido pedagógico sin imponer rutas obligatorias ni bloquear el avance del estudiante.
+
+---
+
+## 2.14 ColecciónLección
+
+Representa la pertenencia ordenada de una lección a una colección determinada.
+
+Permite que una lección forme parte de múltiples colecciones simultáneamente y define un orden secuencial sugerido/pedagógico dentro de cada colección, manteniendo la libertad de acceso directo a cualquiera de las lecciones.
+

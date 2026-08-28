@@ -74,6 +74,10 @@ public class ExceptionHandlingMiddleware
                 StatusCodes.Status404NotFound,
                 CreateErrorResponse("Not Found", catNotFoundEx.Message)),
 
+            CollectionNotFoundException colNotFoundEx => (
+                StatusCodes.Status404NotFound,
+                CreateErrorResponse("Not Found", colNotFoundEx.Message)),
+
             ExerciseNotFoundException exNotFoundEx => (
                 StatusCodes.Status404NotFound,
                 CreateErrorResponse("Not Found", exNotFoundEx.Message)),

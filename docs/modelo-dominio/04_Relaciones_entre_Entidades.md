@@ -23,6 +23,7 @@
 | R9  | Usuario            | *genera*                                | GrabaciónAudio                |         1 : N         |
 | R10 | Ejercicio          | *recibe grabaciones de*                 | GrabaciónAudio                |         1 : N         |
 | R11 | Usuario            | *genera*                                | RegistroActividad             |         1 : N         |
+| R12 | Colección          | *agrupa (vía ColecciónLección)*         | Lección                       |     N : M (ordenado)  |
 
 ---
 
@@ -90,6 +91,12 @@ Un usuario genera registros de actividad que representan los eventos relevantes 
 
 ---
 
+### R12 — Colección ↔ Lección (vía ColecciónLección) `[N : M ordenado]`
+
+Una colección **agrupa** un conjunto ordenado de lecciones orientadas a un propósito o contexto formativo. Una lección puede pertenecer simultáneamente a múltiples colecciones. La entidad `ColecciónLección` preserva el orden de presentación sugerido dentro de la colección. El acceso a cada lección es independiente y directo.
+
+---
+
 ## 4.3 Resumen Visual
 
 ```text
@@ -97,6 +104,8 @@ Usuario ──── 1 : N ──── ProgresoLección
 Usuario ──── N : M ──── Lección              (vía Favorito)
 Usuario ──── 1 : N ──── GrabaciónAudio
 Usuario ──── 1 : N ──── RegistroActividad
+
+Colección ─── N : M ──── Lección              (vía ColecciónLección, ordenado)
 
 Lección ──── 1 : N ──── LessonBlock
 LessonBlock ──── 0 : 1 ──── Ejercicio

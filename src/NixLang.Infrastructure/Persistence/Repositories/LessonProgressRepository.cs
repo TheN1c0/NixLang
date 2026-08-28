@@ -37,4 +37,9 @@ public class LessonProgressRepository : ILessonProgressRepository
     {
         await _dbContext.LessonProgress.AddAsync(progress, cancellationToken);
     }
+
+    public async Task AddExerciseResultAsync(ExerciseResult exerciseResult, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.ExerciseResults.AddAsync(exerciseResult, cancellationToken);
+    }
 }

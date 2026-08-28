@@ -42,28 +42,43 @@ public class LessonProgress : BaseEntity
 
     public void UpdateProgress(decimal progressPercentage, ProgressStatus status)
     {
-        ProgressPercentage = progressPercentage;
-        Status = status;
-        if (status == ProgressStatus.Completed && CompletedAt == null)
+        // Invariant: Once a lesson has reached Completed status (100%),
+        // a subsequent partial repetition must NEVER degrade its completion status
+        // nor wipe out its CompletedAt timestamp.
+        if (Status == ProgressStatus.Completed)
         {
-            CompletedAt = DateTime.UtcNow;
+            return;
         }
-        else if (status != ProgressStatus.Completed)
+
+        if (status == ProgressStatus.Completed || progressPercentage >= 100m)
         {
-            CompletedAt = null;
+            Status = ProgressStatus.Completed;
+            ProgressPercentage = 100m;
+            if (CompletedAt == null)
+            {
+                CompletedAt = DateTime.UtcNow;
+            }
+        }
+        else
+        {
+            Status = status;
+            ProgressPercentage = Math.Max(ProgressPercentage, progressPercentage);
         }
     }
 
-    public void AddExerciseResult(Guid exerciseId, string givenAnswer, bool isCorrect)
+    public ExerciseResult? AddExerciseResult(Guid exerciseId, string givenAnswer, bool isCorrect)
     {
         var existing = _exerciseResults.FirstOrDefault(r => r.ExerciseId == exerciseId);
         if (existing != null)
         {
             existing.Update(givenAnswer, isCorrect);
+            return null;
         }
         else
         {
-            _exerciseResults.Add(new ExerciseResult(Id, exerciseId, givenAnswer, isCorrect));
+            var newResult = new ExerciseResult(Id, exerciseId, givenAnswer, isCorrect);
+            _exerciseResults.Add(newResult);
+            return newResult;
         }
     }
 }

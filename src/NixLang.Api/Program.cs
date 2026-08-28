@@ -64,4 +64,20 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Auto-seed demo data and initialize DB
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<NixLang.Infrastructure.Persistence.NixLangDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<NixLang.Application.Common.Interfaces.IPasswordHasher>();
+        await NixLang.Infrastructure.Persistence.DbInitializer.InitializeAsync(dbContext, passwordHasher);
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+
 app.Run();

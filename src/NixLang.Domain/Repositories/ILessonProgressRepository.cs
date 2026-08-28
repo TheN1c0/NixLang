@@ -11,4 +11,5 @@ public interface ILessonProgressRepository
     Task<LessonProgress?> GetAsync(Guid userId, Guid lessonId, CancellationToken cancellationToken = default);
     Task<List<LessonProgress>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task AddAsync(LessonProgress progress, CancellationToken cancellationToken = default);
+    Task AddExerciseResultAsync(ExerciseResult exerciseResult, CancellationToken cancellationToken = default);
 }

@@ -142,3 +142,31 @@
 | Atributo | Tipo          |
 | -------- | ------------- |
 | `id`     | Identificador |
+
+---
+
+## 3.13 Colección
+
+| Atributo             | Tipo                      |
+| -------------------- | ------------------------- |
+| `id`                 | Identificador             |
+| `título`             | Texto                     |
+| `descripción`        | Texto                     |
+| `iconoUrl`           | URL / Cadena (Opcional)   |
+| `nivelSugerido`      | NivelReferencial (Opcional)|
+| `estado`             | EstadoPublicación         |
+| `ordenVisual`        | Entero                    |
+| `fechaCreación`      | FechaHora                 |
+| `fechaActualización` | FechaHora (Opcional)      |
+
+---
+
+## 3.14 ColecciónLección
+
+| Atributo      | Tipo          |
+| ------------- | ------------- |
+| `id`          | Identificador |
+| `colecciónId` | Identificador |
+| `lecciónId`   | Identificador |
+| `orden`       | Entero        |
+

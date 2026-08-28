@@ -97,7 +97,11 @@ public class SaveLessonProgressCommandHandler : IRequestHandler<SaveLessonProgre
         {
             foreach (var result in request.Results)
             {
-                progress.AddExerciseResult(result.ExerciseId, result.GivenAnswer, result.IsCorrect);
+                var newResult = progress.AddExerciseResult(result.ExerciseId, result.GivenAnswer, result.IsCorrect);
+                if (newResult != null)
+                {
+                    await _progressRepository.AddExerciseResultAsync(newResult, cancellationToken);
+                }
             }
         }
 

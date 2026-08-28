@@ -16,12 +16,14 @@
 | 4  | **Ejercicio**            | Entidad            | Agregado Lección           |
 | 5  | **AlternativaEjercicio** | Entidad            | Agregado Lección           |
 | 6  | **Categoría**            | Entidad Raíz       | Agregado Categoría         |
-| 7  | **ProgresoLección**      | Entidad Raíz       | Agregado Progreso          |
-| 8  | **ResultadoEjercicio**   | Entidad            | Agregado Progreso          |
-| 9  | **GrabaciónAudio**       | Entidad            | Agregado Progreso          |
-| 10 | **RegistroActividad**    | Entidad            | Agregado Progreso          |
-| 11 | **Favorito**             | Entidad Asociativa | Asociación entre agregados |
-| 12 | **LecciónCategoría**     | Entidad Asociativa | Asociación entre agregados |
+| 7  | **Colección**            | Entidad Raíz       | Agregado Colección         |
+| 8  | **ColecciónLección**     | Entidad            | Agregado Colección         |
+| 9  | **ProgresoLección**      | Entidad Raíz       | Agregado Progreso          |
+| 10 | **ResultadoEjercicio**   | Entidad            | Agregado Progreso          |
+| 11 | **GrabaciónAudio**       | Entidad            | Agregado Progreso          |
+| 12 | **RegistroActividad**    | Entidad            | Agregado Progreso          |
+| 13 | **Favorito**             | Entidad Asociativa | Asociación entre agregados |
+| 14 | **LecciónCategoría**     | Entidad Asociativa | Asociación entre agregados |
 
 ---
 
@@ -30,8 +32,9 @@
 | Value Object          | Descripción                                                                                                                                                                                                                                                                |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **NivelReferencial**  | Enumeración: `A1`, `A2`, `B1`, `B2`                                                                                                                                                                                                                                        |
-| **TipoLessonBlock**   | Enumeración que identifica el tipo de bloque que compone una lección. Inicialmente contempla: `HEADING`, `PARAGRAPH`, `IMAGE`, `AUDIO`, `EXERCISE`, `FEEDBACK`, `REVIEW` y `SUMMARY`. La plataforma podrá incorporar nuevos tipos sin modificar la estructura del dominio. |
+| **TipoLessonBlock**   | Enumeración que identifica el tipo de bloque que compone una lección. Inicialmente contempla: `HEADING`, `PARAGRAPH`, `IMAGE`, `AUDIO`, `EXERCISE`, `FEEDBACK`, `REVIEW`, `SUMMARY` y `EDUCATIONAL_CONTENT`. La plataforma podrá incorporar nuevos tipos sin modificar la estructura del dominio. |
 | **TipoEjercicio**     | Enumeración: `TRADUCCION`, `COMPLETAR_ESPACIOS`, `OPCION_MULTIPLE`, `PRONUNCIACION`                                                                                                                                                                                        |
+| **EstadoPublicación** | Enumeración: `DRAFT`, `PUBLISHED`, `DISABLED` (aplica a Lección y Colección)                                                                                                                                                                                               |
 | **EstadoProgreso**    | Enumeración: `NO_INICIADA`, `EN_PROGRESO`, `COMPLETADA`                                                                                                                                                                                                                    |
 | **TipoActividad**     | Enumeración: `INICIO_SESION`, `INICIO_LECCION`, `RESPUESTA_EJERCICIO`, `COMPLETAR_LECCION`, `AGREGAR_FAVORITO`, `QUITAR_FAVORITO`                                                                                                                                          |
 | **Rol**               | Enumeración: `USUARIO`, `ADMINISTRADOR`                                                                                                                                                                                                                                    |
@@ -42,23 +45,11 @@
 
 ## Consideraciones del Modelo
 
-El núcleo del dominio evoluciona desde un modelo centrado en ejercicios hacia un modelo centrado en bloques de aprendizaje.
+El núcleo del dominio evoluciona desde un modelo centrado en ejercicios hacia un modelo centrado en bloques de aprendizaje y colecciones de experiencias:
 
-Una **Lección** deja de estar compuesta directamente por ejercicios y pasa a estar formada por una secuencia ordenada de **LessonBlocks**.
+1. Una **Lección** deja de estar compuesta directamente por ejercicios y pasa a estar formada por una secuencia ordenada de **LessonBlocks**.
+2. Cada **LessonBlock** representa una unidad de contenido o interacción dentro de la experiencia de aprendizaje (información, multimedia, ejercicios evaluables o contenido educativo independiente).
+3. Una **Colección** agrupa lecciones bajo un **tema, propósito o contexto experiencial de la vida real** (ej. "Inglés para viajar", "Inglés para entrevistas laborales").
+4. **Libertad de Aprendizaje**: Las colecciones organizan y guían el descubrimiento, pero **no imponen rutas obligatorias ni bloquean lecciones**. El estudiante puede ingresar a cualquier colección y resolver cualquier lección en cualquier orden.
+5. El progreso de la colección se deriva dinámicamente del progreso de sus lecciones componentes, sin requerir entidades redundantes de seguimiento.
 
-Cada **LessonBlock** representa una unidad de contenido o interacción dentro de la experiencia de aprendizaje.
-
-Dependiendo de su tipo, un bloque puede:
-
-* mostrar información;
-* presentar imágenes;
-* reproducir audio;
-* solicitar una interacción al usuario;
-* presentar un ejercicio;
-* entregar retroalimentación;
-* realizar un repaso;
-* mostrar un resumen.
-
-Los **Ejercicios** continúan existiendo como entidad del dominio, pero dejan de ser la unidad estructural de una lección. En adelante representan únicamente la lógica de una actividad evaluable, la cual puede ser utilizada por un `LessonBlock` de tipo `EXERCISE`.
-
-Este enfoque permite incorporar nuevos tipos de bloques sin modificar la estructura fundamental de las lecciones ni del agregado correspondiente.

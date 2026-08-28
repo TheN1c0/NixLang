@@ -20,6 +20,8 @@ public class NixLangDbContext : DbContext, IUnitOfWork
     public DbSet<Favorite> Favorites => Set<Favorite>();
     public DbSet<LessonProgress> LessonProgress => Set<LessonProgress>();
     public DbSet<ExerciseResult> ExerciseResults => Set<ExerciseResult>();
+    public DbSet<Collection> Collections => Set<Collection>();
+    public DbSet<CollectionLesson> CollectionLessons => Set<CollectionLesson>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

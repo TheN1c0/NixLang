@@ -851,6 +851,164 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
+    [Fact]
+    public async Task SaveLessonProgress_RepeatingCompletedLesson_NeverDegradesCompletedStatus()
+    {
+        // Arrange
+        Guid lessonId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var lesson = new Lesson($"Repeat Lesson Test {Guid.NewGuid()}", "Desc", ReferenceLevel.A1);
+            lesson.Publish();
+            dbContext.Lessons.Add(lesson);
+            dbContext.SaveChanges();
+            lessonId = lesson.Id;
+        }
+
+        var token = await RegisterAndLogin();
+
+        // 1. Initial complete execution (100% -> Completed)
+        var req1 = new HttpRequestMessage(HttpMethod.Post, $"/api/lessons/{lessonId}/progress");
+        req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req1.Content = JsonContent.Create(new
+        {
+            ProgressPercentage = 100.00m,
+            Status = "Completed",
+            Results = Array.Empty<object>()
+        });
+        var res1 = await _client.SendAsync(req1);
+        Assert.Equal(HttpStatusCode.OK, res1.StatusCode);
+
+        // Verify lesson is Completed with 100% in catalog
+        var getReq1 = new HttpRequestMessage(HttpMethod.Get, "/api/lessons");
+        getReq1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var getRes1 = await _client.SendAsync(getReq1);
+        var catalog1 = await getRes1.Content.ReadFromJsonAsync<PagedResultDto>();
+        var item1 = catalog1!.Items.First(i => i.Id == lessonId);
+        Assert.Equal("Completed", item1.Status);
+        Assert.Equal(100m, item1.ProgressPercentage);
+
+        // 2. User repeats lesson and triggers partial progress (25% -> InProgress)
+        var req2 = new HttpRequestMessage(HttpMethod.Post, $"/api/lessons/{lessonId}/progress");
+        req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req2.Content = JsonContent.Create(new
+        {
+            ProgressPercentage = 25.00m,
+            Status = "InProgress",
+            Results = Array.Empty<object>()
+        });
+        var res2 = await _client.SendAsync(req2);
+        Assert.Equal(HttpStatusCode.OK, res2.StatusCode);
+
+        // Verify lesson STILL remains Completed with 100% in catalog
+        var getReq2 = new HttpRequestMessage(HttpMethod.Get, "/api/lessons");
+        getReq2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var getRes2 = await _client.SendAsync(getReq2);
+        var catalog2 = await getRes2.Content.ReadFromJsonAsync<PagedResultDto>();
+        var item2 = catalog2!.Items.First(i => i.Id == lessonId);
+        Assert.Equal("Completed", item2.Status);
+        Assert.Equal(100m, item2.ProgressPercentage);
+    }
+
+    [Fact]
+    public async Task SaveLessonProgress_MultiStepExecutionWithExerciseAnswering_SavesSuccessfullyWithoutError()
+    {
+        // Arrange — Create lesson with 2 exercises
+        Guid lessonId;
+        Guid ex1Id;
+        Guid ex2Id;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<NixLangDbContext>();
+            var lesson = new Lesson($"MultiStep Progress Test {Guid.NewGuid()}", "Desc", ReferenceLevel.A1);
+            lesson.Publish();
+
+            var ex1 = new Exercise(ExerciseType.MultipleChoice, "Question 1", "Ans 1");
+            var ex2 = new Exercise(ExerciseType.FillInTheBlank, "Question 2", "Ans 2");
+            dbContext.Exercises.AddRange(ex1, ex2);
+            dbContext.SaveChanges();
+
+            lesson.AddLessonBlock(LessonBlock.CreateExerciseBlock(lesson.Id, 1, ex1.Id));
+            lesson.AddLessonBlock(LessonBlock.CreateExerciseBlock(lesson.Id, 2, ex2.Id));
+            dbContext.Lessons.Add(lesson);
+            dbContext.SaveChanges();
+
+            lessonId = lesson.Id;
+            ex1Id = ex1.Id;
+            ex2Id = ex2.Id;
+        }
+
+        var token = await RegisterAndLogin();
+
+        // Step 1: User enters lesson (25%, InProgress, no exercises answered yet)
+        var req1 = new HttpRequestMessage(HttpMethod.Post, $"/api/lessons/{lessonId}/progress");
+        req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req1.Content = JsonContent.Create(new
+        {
+            ProgressPercentage = 25.00m,
+            Status = "InProgress",
+            Results = Array.Empty<object>()
+        });
+        var res1 = await _client.SendAsync(req1);
+        Assert.Equal(HttpStatusCode.OK, res1.StatusCode);
+
+        // Step 2: User answers exercise 1 (50%, InProgress, 1 exercise result)
+        var req2 = new HttpRequestMessage(HttpMethod.Post, $"/api/lessons/{lessonId}/progress");
+        req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req2.Content = JsonContent.Create(new
+        {
+            ProgressPercentage = 50.00m,
+            Status = "InProgress",
+            Results = new[]
+            {
+                new { ExerciseId = ex1Id, GivenAnswer = "Ans 1", IsCorrect = true }
+            }
+        });
+        var res2 = await _client.SendAsync(req2);
+        Assert.Equal(HttpStatusCode.OK, res2.StatusCode);
+
+        // Step 3: User answers exercise 2 (100%, Completed, 2 exercise results)
+        var req3 = new HttpRequestMessage(HttpMethod.Post, $"/api/lessons/{lessonId}/progress");
+        req3.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req3.Content = JsonContent.Create(new
+        {
+            ProgressPercentage = 100.00m,
+            Status = "Completed",
+            Results = new[]
+            {
+                new { ExerciseId = ex1Id, GivenAnswer = "Ans 1", IsCorrect = true },
+                new { ExerciseId = ex2Id, GivenAnswer = "Ans 2", IsCorrect = true }
+            }
+        });
+        var res3 = await _client.SendAsync(req3);
+        Assert.Equal(HttpStatusCode.OK, res3.StatusCode);
+
+        // Step 4: User repeats the lesson, re-answers exercise 1 with different answer
+        var req4 = new HttpRequestMessage(HttpMethod.Post, $"/api/lessons/{lessonId}/progress");
+        req4.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req4.Content = JsonContent.Create(new
+        {
+            ProgressPercentage = 50.00m,
+            Status = "InProgress",
+            Results = new[]
+            {
+                new { ExerciseId = ex1Id, GivenAnswer = "Ans 1 Updated", IsCorrect = true }
+            }
+        });
+        var res4 = await _client.SendAsync(req4);
+        Assert.Equal(HttpStatusCode.OK, res4.StatusCode);
+
+        // Verify status remains Completed in catalog
+        var getReq = new HttpRequestMessage(HttpMethod.Get, "/api/lessons");
+        getReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var getRes = await _client.SendAsync(getReq);
+        var catalog = await getRes.Content.ReadFromJsonAsync<PagedResultDto>();
+        var item = catalog!.Items.First(i => i.Id == lessonId);
+        Assert.Equal("Completed", item.Status);
+        Assert.Equal(100m, item.ProgressPercentage);
+    }
+
     private async Task<string> RegisterAndLogin()
     {
         var email = $"lessons_test_{Guid.NewGuid()}@example.com";
@@ -885,6 +1043,9 @@ public class LessonsControllerTests : IClassFixture<CustomWebApplicationFactory>
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string ReferenceLevel { get; set; } = string.Empty;
+        public bool IsFavorite { get; set; }
+        public decimal ProgressPercentage { get; set; }
+        public string Status { get; set; } = string.Empty;
     }
 
     private class LoginResponseDto
